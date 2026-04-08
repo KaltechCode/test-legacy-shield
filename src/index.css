@@ -1,10 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Lato:wght@400;500&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* KB&K Legacy Shield Design System */
-
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400%3b600%3b700&family=Lato:wght@400%3b500&display=swap");
 
 @layer base {
   :root {
