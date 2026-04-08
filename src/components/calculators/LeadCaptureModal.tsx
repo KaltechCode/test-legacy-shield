@@ -1,5 +1,10 @@
 import { useState, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +19,11 @@ interface LeadCaptureModalProps {
   onVerificationRequired: (email: string, firstName: string) => void;
 }
 
-
-export const LeadCaptureModal = ({ open, onOpenChange, onVerificationRequired }: LeadCaptureModalProps) => {
+export const LeadCaptureModal = ({
+  open,
+  onOpenChange,
+  onVerificationRequired,
+}: LeadCaptureModalProps) => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -26,56 +34,62 @@ export const LeadCaptureModal = ({ open, onOpenChange, onVerificationRequired }:
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [turnstileToken, setTurnstileToken] = useState<string>("");
 
-  const handleTurnstileVerify = useCallback((token: string) => {
-    setTurnstileToken(token);
-    // Clear turnstile error if it exists
-    if (errors.turnstile) {
-      setErrors(prev => ({ ...prev, turnstile: "" }));
-    }
-  }, [errors.turnstile]);
+  // const handleTurnstileVerify = useCallback(
+  //   (token: string) => {
+  //     setTurnstileToken(token);
+  //     // Clear turnstile error if it exists
+  //     if (errors.turnstile) {
+  //       setErrors((prev) => ({ ...prev, turnstile: "" }));
+  //     }
+  //   },
+  //   [errors.turnstile],
+  // );
 
-  const handleTurnstileError = useCallback(() => {
-    setTurnstileToken("");
-    setErrors(prev => ({ ...prev, turnstile: "Verification failed. Please try again." }));
-  }, []);
+  // const handleTurnstileError = useCallback(() => {
+  //   setTurnstileToken("");
+  //   setErrors((prev) => ({
+  //     ...prev,
+  //     turnstile: "Verification failed. Please try again.",
+  //   }));
+  // }, []);
 
-  const handleTurnstileExpire = useCallback(() => {
-    setTurnstileToken("");
-  }, []);
+  // const handleTurnstileExpire = useCallback(() => {
+  //   setTurnstileToken("");
+  // }, []);
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  // const validateForm = () => {
+  //   const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!/^[\d\s\-\+\(\)]{10,15}$/.test(formData.phone.trim())) {
-      newErrors.phone = "Please enter a valid phone number";
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = "Please enter a valid email address";
-    }
-    if (!turnstileToken) {
-      newErrors.turnstile = "Please complete the verification and try again.";
-    }
+  //   if (!formData.firstName.trim()) {
+  //     newErrors.firstName = "First name is required";
+  //   }
+  //   if (!formData.lastName.trim()) {
+  //     newErrors.lastName = "Last name is required";
+  //   }
+  //   if (!formData.phone.trim()) {
+  //     newErrors.phone = "Phone number is required";
+  //   } else if (!/^[\d\s\-\+\(\)]{10,15}$/.test(formData.phone.trim())) {
+  //     newErrors.phone = "Please enter a valid phone number";
+  //   }
+  //   if (!formData.email.trim()) {
+  //     newErrors.email = "Email is required";
+  //   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+  //     newErrors.email = "Please enter a valid email address";
+  //   }
+  //   if (!turnstileToken) {
+  //     newErrors.turnstile = "Please complete the verification and try again.";
+  //   }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  //   setErrors(newErrors);
+  //   return Object.keys(newErrors).length === 0;
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    // if (!validateForm()) {
+    //   return;
+    // }
 
     setLoading(true);
 
@@ -99,7 +113,10 @@ export const LeadCaptureModal = ({ open, onOpenChange, onVerificationRequired }:
       if (!data?.success) {
         // Check for turnstile-specific errors
         if (data?.error?.includes("verification")) {
-          setErrors(prev => ({ ...prev, turnstile: "Verification failed. Please try again." }));
+          setErrors((prev) => ({
+            ...prev,
+            turnstile: "Verification failed. Please try again.",
+          }));
           setTurnstileToken("");
           throw new Error("Verification failed. Please try again.");
         }
@@ -107,7 +124,10 @@ export const LeadCaptureModal = ({ open, onOpenChange, onVerificationRequired }:
       }
 
       toast.success("Verification code sent to your email!");
-      onVerificationRequired(formData.email.trim().toLowerCase(), formData.firstName.trim());
+      onVerificationRequired(
+        formData.email.trim().toLowerCase(),
+        formData.firstName.trim(),
+      );
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error in form submission:", error);
@@ -118,9 +138,9 @@ export const LeadCaptureModal = ({ open, onOpenChange, onVerificationRequired }:
   };
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -132,7 +152,8 @@ export const LeadCaptureModal = ({ open, onOpenChange, onVerificationRequired }:
             Where Should We Send Your Results?
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-2">
-            Enter your details to verify your email and receive your personalized results.
+            Enter your details to verify your email and receive your
+            personalized results.
           </p>
         </DialogHeader>
 
@@ -210,16 +231,18 @@ export const LeadCaptureModal = ({ open, onOpenChange, onVerificationRequired }:
           </div>
 
           {/* Cloudflare Turnstile Widget */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <TurnstileWidget
               onVerify={handleTurnstileVerify}
               onError={handleTurnstileError}
               onExpire={handleTurnstileExpire}
             />
             {errors.turnstile && (
-              <p className="text-sm text-destructive text-center">{errors.turnstile}</p>
+              <p className="text-sm text-destructive text-center">
+                {errors.turnstile}
+              </p>
             )}
-          </div>
+          </div> */}
 
           <div className="flex gap-3 pt-4">
             <Button
@@ -231,11 +254,7 @@ export const LeadCaptureModal = ({ open, onOpenChange, onVerificationRequired }:
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1"
-            >
+            <Button type="submit" disabled={loading} className="flex-1">
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -249,7 +268,8 @@ export const LeadCaptureModal = ({ open, onOpenChange, onVerificationRequired }:
         </form>
 
         <p className="text-xs text-muted-foreground text-center mt-4">
-          We respect your privacy. Your information is secure and will never be shared.
+          We respect your privacy. Your information is secure and will never be
+          shared.
         </p>
       </DialogContent>
     </Dialog>

@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { getClientIP, applyRateLimits, RateLimitPresets } from "../_shared/rateLimit.ts";
+import {
+  getClientIP,
+  applyRateLimits,
+  RateLimitPresets,
+} from "../_shared/rateLimit.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { buildUnifiedEmail } from "../_shared/emailTemplate.ts";
 
@@ -22,14 +26,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, firstName, code }: VerificationEmailRequest = await req.json();
+    const { email, firstName, code }: VerificationEmailRequest =
+      await req.json();
 
     // Validate required fields
     if (!email || !firstName || !code) {
       console.error("Missing required fields");
       return new Response(
         JSON.stringify({ success: false, error: "Missing required fields" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        },
       );
     }
 
@@ -39,24 +47,36 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Invalid email format");
       return new Response(
         JSON.stringify({ success: false, error: "Invalid email format" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        },
       );
     }
 
     // Apply rate limiting: per-IP and per-email
     const clientIP = getClientIP(req);
-    
-    const rateLimitResponse = applyRateLimits([
-      {
-        key: clientIP,
-        config: { ...RateLimitPresets.STANDARD, keyPrefix: 'send_verification_ip' }
-      },
-      {
-        key: email.toLowerCase(),
-        config: { ...RateLimitPresets.HOURLY_STRICT, keyPrefix: 'send_verification_email' }
-      }
-    ], corsHeaders);
-    
+
+    const rateLimitResponse = applyRateLimits(
+      [
+        {
+          key: clientIP,
+          config: {
+            ...RateLimitPresets.STANDARD,
+            keyPrefix: "send_verification_ip",
+          },
+        },
+        {
+          key: email.toLowerCase(),
+          config: {
+            ...RateLimitPresets.HOURLY_STRICT,
+            keyPrefix: "send_verification_email",
+          },
+        },
+      ],
+      corsHeaders,
+    );
+
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
@@ -69,7 +89,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Missing Supabase environment variables");
       return new Response(
         JSON.stringify({ success: false, error: "Server configuration error" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        },
       );
     }
 
@@ -86,7 +109,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error checking lead:", leadError);
       return new Response(
         JSON.stringify({ success: false, error: "Failed to verify lead" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        },
       );
     }
 
@@ -94,8 +120,14 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Lead not found for email:", email);
       // SECURITY: Generic error message to prevent email enumeration attacks
       return new Response(
-        JSON.stringify({ success: false, error: "Unable to send verification email" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({
+          success: false,
+          error: "Unable to send verification email",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        },
       );
     }
 
@@ -104,17 +136,21 @@ const handler = async (req: Request): Promise<Response> => {
     const emailHTML = buildUnifiedEmail({
       headerSubtitle: "VERIFICATION REQUIRED",
       firstName,
-      contextStatement: "To complete your request, please verify your email address using the code below.",
+      contextStatement:
+        "To complete your request, please verify your email address using the code below.",
       cardContent: `
         <p style="color:#718096;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 12px 0;text-align:center;font-weight:600;">Your Verification Code</p>
         <p style="font-size:42px;font-weight:800;color:#0A2240;letter-spacing:8px;font-family:'Courier New',monospace;margin:0;text-align:center;">${code}</p>
         <p style="color:#D97706;font-size:13px;font-weight:600;margin:12px 0 0 0;text-align:center;">⏱ This code expires in 10 minutes</p>
       `,
-      secondaryText: "If you didn't request this verification code, you can safely ignore this email.",
+      secondaryText:
+        "If you didn't request this verification code, you can safely ignore this email.",
     });
 
     const emailResponse = await resend.emails.send({
-      from: Deno.env.get("EMAIL_FROM") ?? "KB&K Legacy Shield <no-reply@kbklegacyshield.com>",
+      from:
+        Deno.env.get("EMAIL_FROM") ??
+        "KB&K Legacy Shield <no-reply@kbklegacyshield.com>",
       to: [email],
       subject: "Verify Your Email - KB&K Legacy Shield",
       html: emailHTML,
@@ -133,8 +169,11 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: "An unexpected error occurred." }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...getCorsHeaders(req.headers.get("origin")) },
-      }
+        headers: {
+          "Content-Type": "application/json",
+          ...getCorsHeaders(req.headers.get("origin")),
+        },
+      },
     );
   }
 };
