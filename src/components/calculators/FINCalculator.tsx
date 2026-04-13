@@ -31,6 +31,7 @@ import { EmailVerificationModal } from "./EmailVerificationModal";
 import { SaveDownloadModal } from "./SaveDownloadModal";
 import { openBookingLink } from "@/lib/booking";
 type Mode = "simple" | "advanced";
+
 interface Inputs {
   currentAge: string;
   retireAge: string;

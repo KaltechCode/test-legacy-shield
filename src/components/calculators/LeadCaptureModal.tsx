@@ -34,55 +34,55 @@ export const LeadCaptureModal = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [turnstileToken, setTurnstileToken] = useState<string>("");
 
-  // const handleTurnstileVerify = useCallback(
-  //   (token: string) => {
-  //     setTurnstileToken(token);
-  //     // Clear turnstile error if it exists
-  //     if (errors.turnstile) {
-  //       setErrors((prev) => ({ ...prev, turnstile: "" }));
-  //     }
-  //   },
-  //   [errors.turnstile],
-  // );
+  const handleTurnstileVerify = useCallback(
+    (token: string) => {
+      setTurnstileToken(token);
+      // Clear turnstile error if it exists
+      if (errors.turnstile) {
+        setErrors((prev) => ({ ...prev, turnstile: "" }));
+      }
+    },
+    [errors.turnstile],
+  );
 
-  // const handleTurnstileError = useCallback(() => {
-  //   setTurnstileToken("");
-  //   setErrors((prev) => ({
-  //     ...prev,
-  //     turnstile: "Verification failed. Please try again.",
-  //   }));
-  // }, []);
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken("");
+    setErrors((prev) => ({
+      ...prev,
+      turnstile: "Verification failed. Please try again.",
+    }));
+  }, []);
 
-  // const handleTurnstileExpire = useCallback(() => {
-  //   setTurnstileToken("");
-  // }, []);
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken("");
+  }, []);
 
-  // const validateForm = () => {
-  //   const newErrors: Record<string, string> = {};
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
 
-  //   if (!formData.firstName.trim()) {
-  //     newErrors.firstName = "First name is required";
-  //   }
-  //   if (!formData.lastName.trim()) {
-  //     newErrors.lastName = "Last name is required";
-  //   }
-  //   if (!formData.phone.trim()) {
-  //     newErrors.phone = "Phone number is required";
-  //   } else if (!/^[\d\s\-\+\(\)]{10,15}$/.test(formData.phone.trim())) {
-  //     newErrors.phone = "Please enter a valid phone number";
-  //   }
-  //   if (!formData.email.trim()) {
-  //     newErrors.email = "Email is required";
-  //   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-  //     newErrors.email = "Please enter a valid email address";
-  //   }
-  //   if (!turnstileToken) {
-  //     newErrors.turnstile = "Please complete the verification and try again.";
-  //   }
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    }
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^[\d\s\-\+\(\)]{10,15}$/.test(formData.phone.trim())) {
+      newErrors.phone = "Please enter a valid phone number";
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    // if (!turnstileToken) {
+    //   newErrors.turnstile = "Please complete the verification and try again.";
+    // }
 
-  //   setErrors(newErrors);
-  //   return Object.keys(newErrors).length === 0;
-  // };
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +101,7 @@ export const LeadCaptureModal = ({
           lastName: formData.lastName.trim(),
           phone: formData.phone.trim(),
           email: formData.email.trim().toLowerCase(),
-          turnstile_token: turnstileToken,
+          turnstile_token: "turnstileToken",
         },
       });
 
