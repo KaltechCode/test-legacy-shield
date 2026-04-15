@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import nodemailer from "npm:nodemailer";
 
 const transporter = nodemailer.createTransport({
-  host: Deno.env.get("SMTP_USER") ?? "",
+  host: Deno.env.get("SMTP_HOST") ?? "",
   port: Deno.env.get("SMTP_PORT")
     ? parseInt(Deno.env.get("SMTP_PORT") ?? "465")
     : 465,
@@ -10,6 +10,10 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: Deno.env.get("SMTP_USER") ?? "",
     pass: Deno.env.get("SMTP_PASS") ?? "",
+  },
+  tls: {
+    // Do not fail on invalid certs
+    rejectUnauthorized: false,
   },
 });
 

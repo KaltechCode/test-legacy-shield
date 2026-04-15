@@ -1,8 +1,6 @@
 // Allowed origins for CORS
 export const ALLOWED_ORIGINS = [
-  "https://kbklegacyshield.com",
-  "https://www.kbklegacyshield.com",
-  "https://test-legacy-shield.vercel.app/",
+  "https://test-legacy-shield.vercel.app",
   // Localhost for local development
   "http://localhost:8080",
 ];

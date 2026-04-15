@@ -3,7 +3,7 @@
  * without rendering any visible widget. Loads the Turnstile script lazily.
  */
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE || "";
 
 function loadTurnstileScript(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -18,7 +18,8 @@ function loadTurnstileScript(): Promise<void> {
       return;
     }
     const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.src =
+      "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error("Failed to load Turnstile script"));
@@ -50,7 +51,9 @@ export async function getInvisibleTurnstileToken(): Promise<string> {
 
     const cleanup = () => {
       if (widgetId && window.turnstile) {
-        try { window.turnstile.remove(widgetId); } catch {}
+        try {
+          window.turnstile.remove(widgetId);
+        } catch {}
       }
       container.remove();
     };
