@@ -1,20 +1,20 @@
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Lato:wght@400;500&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* KB&K Legacy Shield Design System */
 
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Lato:wght@400;500&display=swap');
+
 @layer base {
   :root {
     /* KB&K Brand Colors */
-    --navy-primary: 210 48% 21%; /* #1E2A4A - Dark Navy Blue */
-    --sky-primary: 201 96% 62%; /* #3DAEFC - Bright Sky Blue */
-    --purple-accent: 267 45% 35%; /* #4B2E83 - Deep Purple (Authority) */
-    --gray-light: 210 22% 96%; /* #F4F6F8 - Light Gray */
-    --gray-charcoal: 0 0% 20%; /* #333333 - Charcoal Gray */
-
+    --navy-primary: 210 48% 21%;        /* #1E2A4A - Dark Navy Blue */
+    --sky-primary: 201 96% 62%;         /* #3DAEFC - Bright Sky Blue */
+    --purple-accent: 267 45% 35%;       /* #4B2E83 - Deep Purple (Authority) */
+    --gray-light: 210 22% 96%;          /* #F4F6F8 - Light Gray */
+    --gray-charcoal: 0 0% 20%;          /* #333333 - Charcoal Gray */
+    
     /* Semantic Design Tokens */
     --background: 0 0% 100%;
     --foreground: var(--gray-charcoal);
@@ -45,21 +45,9 @@
     --ring: var(--sky-primary);
 
     /* Gradients */
-    --gradient-hero: linear-gradient(
-      135deg,
-      hsl(var(--navy-primary)),
-      hsl(var(--sky-primary))
-    );
-    --gradient-cta: linear-gradient(
-      135deg,
-      hsl(var(--sky-primary)),
-      hsl(var(--purple-accent))
-    );
-    --gradient-card: linear-gradient(
-      145deg,
-      hsl(var(--gray-light)),
-      hsl(0 0% 100%)
-    );
+    --gradient-hero: linear-gradient(135deg, hsl(var(--navy-primary)), hsl(var(--sky-primary)));
+    --gradient-cta: linear-gradient(135deg, hsl(var(--sky-primary)), hsl(var(--purple-accent)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--gray-light)), hsl(0 0% 100%));
 
     /* Shadows */
     --shadow-card: 0 4px 20px -2px hsl(var(--navy-primary) / 0.1);
@@ -133,12 +121,7 @@
     @apply bg-background text-foreground font-body;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
   }
 }
@@ -169,44 +152,30 @@
   }
 
   .font-heading {
-    font-family: "Montserrat", sans-serif;
+    font-family: 'Montserrat', sans-serif;
   }
 
   .font-body {
-    font-family: "Lato", sans-serif;
+    font-family: 'Lato', sans-serif;
   }
 
   /* Scroll Animation Utilities */
   .scroll-animate {
     opacity: 0;
     transform: translateY(20px);
-    transition:
-      opacity 0.6s ease-out,
-      transform 0.6s ease-out;
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
   }
-
+  
   .scroll-animate-visible {
     opacity: 1;
     transform: translateY(0);
   }
 
   /* Stagger Delays */
-  .stagger-1 {
-    transition-delay: 100ms;
-  }
-  .stagger-2 {
-    transition-delay: 200ms;
-  }
-  .stagger-3 {
-    transition-delay: 300ms;
-  }
-  .stagger-4 {
-    transition-delay: 400ms;
-  }
-  .stagger-5 {
-    transition-delay: 500ms;
-  }
-  .stagger-6 {
-    transition-delay: 600ms;
-  }
+  .stagger-1 { transition-delay: 100ms; }
+  .stagger-2 { transition-delay: 200ms; }
+  .stagger-3 { transition-delay: 300ms; }
+  .stagger-4 { transition-delay: 400ms; }
+  .stagger-5 { transition-delay: 500ms; }
+  .stagger-6 { transition-delay: 600ms; }
 }

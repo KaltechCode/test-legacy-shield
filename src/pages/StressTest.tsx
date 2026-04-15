@@ -20,25 +20,18 @@ import heroImage from "@/assets/hero-family-legacy.jpg";
 
 // ── Client-side scoring (mirrors server logic) ──
 
-function calculatePillar1(
-  annualIncome: number,
-  monthlyExpenses: number,
-): number {
+function calculatePillar1(annualIncome: number, monthlyExpenses: number): number {
   const monthlyIncome = annualIncome / 12;
   if (monthlyIncome <= 0) return 0;
   const ratio = monthlyExpenses / monthlyIncome;
-  if (ratio <= 0.5) return 30;
+  if (ratio <= 0.50) return 30;
   if (ratio <= 0.65) return 22;
-  if (ratio <= 0.8) return 14;
+  if (ratio <= 0.80) return 14;
   if (ratio <= 0.95) return 6;
   return 0;
 }
 
-function calculatePillar2(
-  annualIncome: number,
-  mortgageBalance: number,
-  consumerDebt: number,
-): number {
+function calculatePillar2(annualIncome: number, mortgageBalance: number, consumerDebt: number): number {
   if (annualIncome <= 0) return 0;
   const totalDebt = mortgageBalance + consumerDebt;
   const ratio = totalDebt / annualIncome;
@@ -49,18 +42,13 @@ function calculatePillar2(
   return 0;
 }
 
-function calculatePillar3(
-  annualIncome: number,
-  mortgageBalance: number,
-  consumerDebt: number,
-  lifeInsurance: number,
-): number {
+function calculatePillar3(annualIncome: number, mortgageBalance: number, consumerDebt: number, lifeInsurance: number): number {
   const requiredCoverage = annualIncome * 10 + mortgageBalance + consumerDebt;
   if (requiredCoverage <= 0) return 40;
   const ratio = lifeInsurance / requiredCoverage;
   if (ratio >= 1.0) return 40;
   if (ratio >= 0.75) return 30;
-  if (ratio >= 0.5) return 20;
+  if (ratio >= 0.50) return 20;
   if (ratio >= 0.25) return 10;
   return 0;
 }
@@ -74,47 +62,33 @@ function getCategory(score: number): string {
 
 function getCategoryColor(category: string): string {
   switch (category) {
-    case "Structurally Strong":
-      return "text-emerald-500";
-    case "Moderate Risk":
-      return "text-amber-500";
-    case "Elevated Vulnerability":
-      return "text-orange-500";
-    case "Financially Fragile":
-      return "text-red-500";
-    default:
-      return "text-muted-foreground";
+    case "Structurally Strong": return "text-emerald-500";
+    case "Moderate Risk": return "text-amber-500";
+    case "Elevated Vulnerability": return "text-orange-500";
+    case "Financially Fragile": return "text-red-500";
+    default: return "text-muted-foreground";
   }
 }
 
 function getCategoryBgColor(category: string): string {
   switch (category) {
-    case "Structurally Strong":
-      return "bg-emerald-500";
-    case "Moderate Risk":
-      return "bg-amber-500";
-    case "Elevated Vulnerability":
-      return "bg-orange-500";
-    case "Financially Fragile":
-      return "bg-red-500";
-    default:
-      return "bg-muted";
+    case "Structurally Strong": return "bg-emerald-500";
+    case "Moderate Risk": return "bg-amber-500";
+    case "Elevated Vulnerability": return "bg-orange-500";
+    case "Financially Fragile": return "bg-red-500";
+    default: return "bg-muted";
   }
 }
 
 function getExposureMessage(score: number): string {
-  if (score < 50)
-    return "Your current financial structure shows signs of instability that could become disruptive under pressure. Immediate attention to foundational areas is strongly recommended.";
-  if (score < 75)
-    return "Certain areas of your financial structure are creating measurable exposure that should be addressed deliberately to prevent future strain.";
+  if (score < 50) return "Your current financial structure shows signs of instability that could become disruptive under pressure. Immediate attention to foundational areas is strongly recommended.";
+  if (score < 75) return "Certain areas of your financial structure are creating measurable exposure that should be addressed deliberately to prevent future strain.";
   return "Your financial foundation shows strong stability, with key structures already in place to support resilience.";
 }
 
 function getInsightMessage(score: number): string {
-  if (score < 50)
-    return "At this level, most individuals are operating with visible financial strain and limited margin for error. The gaps are typically structural, not just behavioral.";
-  if (score < 75)
-    return "Most individuals in this range have hidden gaps that are not immediately visible but can surface during financial disruption.";
+  if (score < 50) return "At this level, most individuals are operating with visible financial strain and limited margin for error. The gaps are typically structural, not just behavioral.";
+  if (score < 75) return "Most individuals in this range have hidden gaps that are not immediately visible but can surface during financial disruption.";
   return "At this level, the opportunity is not just protection, but optimization. Small adjustments can significantly strengthen long-term outcomes.";
 }
 
@@ -153,13 +127,7 @@ const StressTest = () => {
     e.preventDefault();
     if (!form.consent) return;
 
-    const numericFields = [
-      "annualIncome",
-      "monthlyExpenses",
-      "mortgageBalance",
-      "consumerDebt",
-      "lifeInsuranceCoverage",
-    ] as const;
+    const numericFields = ["annualIncome", "monthlyExpenses", "mortgageBalance", "consumerDebt", "lifeInsuranceCoverage"] as const;
     for (const field of numericFields) {
       if (form[field] === "") {
         toast.error("Please fill in all financial fields.");
@@ -169,7 +137,7 @@ const StressTest = () => {
 
     setSubmitting(true);
     try {
-      // const turnstileToken = await getInvisibleTurnstileToken();
+      const turnstileToken = await getInvisibleTurnstileToken();
 
       const annualIncome = Number(form.annualIncome);
       const monthlyExpenses = Number(form.monthlyExpenses);
@@ -177,26 +145,23 @@ const StressTest = () => {
       const consumerDebt = Number(form.consumerDebt);
       const lifeInsuranceCoverage = Number(form.lifeInsuranceCoverage);
 
-      const { data, error } = await supabase.functions.invoke(
-        "save-stress-test-intake",
-        {
-          body: {
-            first_name: form.firstName,
-            last_name: form.lastName,
-            email: form.email,
-            phone: form.phone,
-            marital_status: form.maritalStatus,
-            number_of_children: form.children,
-            primary_concern: form.primaryConcern,
-            annual_income: annualIncome,
-            monthly_expenses: monthlyExpenses,
-            mortgage_balance: mortgageBalance,
-            consumer_debt: consumerDebt,
-            life_insurance_coverage: lifeInsuranceCoverage,
-            // turnstile_token: turnstileToken,
-          },
+      const { data, error } = await supabase.functions.invoke("save-stress-test-intake", {
+        body: {
+          first_name: form.firstName,
+          last_name: form.lastName,
+          email: form.email,
+          phone: form.phone,
+          marital_status: form.maritalStatus,
+          number_of_children: form.children,
+          primary_concern: form.primaryConcern,
+          annual_income: annualIncome,
+          monthly_expenses: monthlyExpenses,
+          mortgage_balance: mortgageBalance,
+          consumer_debt: consumerDebt,
+          life_insurance_coverage: lifeInsuranceCoverage,
+          turnstile_token: turnstileToken,
         },
-      );
+      });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -209,12 +174,7 @@ const StressTest = () => {
       // Calculate score client-side for immediate display
       const p1 = calculatePillar1(annualIncome, monthlyExpenses);
       const p2 = calculatePillar2(annualIncome, mortgageBalance, consumerDebt);
-      const p3 = calculatePillar3(
-        annualIncome,
-        mortgageBalance,
-        consumerDebt,
-        lifeInsuranceCoverage,
-      );
+      const p3 = calculatePillar3(annualIncome, mortgageBalance, consumerDebt, lifeInsuranceCoverage);
       const totalScore = p1 + p2 + p3;
       const category = getCategory(totalScore);
 
@@ -225,18 +185,14 @@ const StressTest = () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       console.error("Intake save error:", error);
-      toast.error(
-        "Something went wrong saving your information. Please try again.",
-      );
+      toast.error("Something went wrong saving your information. Please try again.");
       setSubmitting(false);
     }
   };
 
   const handleStripeCheckout = () => {
     if (!scoreData) return;
-    const stripeUrl = new URL(
-      "https://buy.stripe.com/test_7sY7sLbD51X6cqocs7bo400",
-    );
+    const stripeUrl = new URL("https://buy.stripe.com/test_7sY7sLbD51X6cqocs7bo400");
     stripeUrl.searchParams.set("client_reference_id", scoreData.intakeId);
     window.location.href = stripeUrl.toString();
   };
@@ -262,14 +218,10 @@ const StressTest = () => {
                   </p>
                   <p className="text-6xl md:text-7xl font-bold text-primary-foreground leading-none">
                     {scoreData.score}
-                    <span className="text-2xl text-primary-foreground/50 font-normal">
-                      /100
-                    </span>
+                    <span className="text-2xl text-primary-foreground/50 font-normal">/100</span>
                   </p>
                   <div className="mt-4">
-                    <span
-                      className={`inline-block px-4 py-1.5 rounded-full text-white text-sm font-bold ${getCategoryBgColor(scoreData.category)}`}
-                    >
+                    <span className={`inline-block px-4 py-1.5 rounded-full text-white text-sm font-bold ${getCategoryBgColor(scoreData.category)}`}>
                       {scoreData.category}
                     </span>
                   </div>
@@ -280,8 +232,7 @@ const StressTest = () => {
                 </p>
 
                 <p className="text-primary-foreground/60 text-sm mt-6">
-                  This is your preliminary assessment based on the information
-                  provided.
+                  This is your preliminary assessment based on the information provided.
                 </p>
               </div>
             </AnimatedSection>
@@ -300,8 +251,7 @@ const StressTest = () => {
                   Ready to understand what is really driving your score?
                 </p>
                 <p className="text-lg text-foreground/80 mb-6">
-                  Upgrade to a full Financial Diagnostic to uncover your key
-                  gaps, risks, and a clear path forward.
+                  Upgrade to a full Financial Diagnostic to uncover your key gaps, risks, and a clear path forward.
                 </p>
                 <p className="text-base text-foreground/60 italic mb-10">
                   {getInsightMessage(score)}
@@ -340,33 +290,28 @@ const StressTest = () => {
               </span>
             </h1>
             <p className="text-xl md:text-2xl mb-4 text-white/90 max-w-3xl mx-auto">
-              The Financial Stability Score identifies hidden gaps in
-              protection, income resilience, and retirement readiness — then
-              gives you a clear action plan.
+              The Financial Stability Score identifies hidden gaps in protection, income
+              resilience, and retirement readiness — then gives you a clear action plan.
             </p>
             <p className="text-base mb-8 text-white/70 max-w-2xl mx-auto">
-              Built for first-generation wealth builders earning $120K–$300K who
-              want clarity without overwhelm.
+              Built for first-generation wealth builders earning $120K–$300K who want clarity
+              without overwhelm.
             </p>
             <div className="flex flex-col items-center gap-3">
               <Button
                 size="lg"
                 className="bg-white text-navy-primary border-2 border-navy-primary hover:bg-navy-primary hover:text-white font-heading font-semibold px-8 py-6 text-lg transition-colors"
                 onClick={() =>
-                  document
-                    .getElementById("intake-form")
-                    ?.scrollIntoView({ behavior: "smooth" })
+                  document.getElementById("intake-form")?.scrollIntoView({ behavior: "smooth" })
                 }
               >
                 Get My Free Financial Stability Score
               </Button>
               <p className="text-sm text-white/70 text-center">
-                Takes less than 3 minutes. No payment required to see your
-                score.
+                Takes less than 3 minutes. No payment required to see your score.
               </p>
               <p className="text-xs text-white/50 text-center">
-                Want a deeper breakdown? Full Financial Diagnostic available for
-                $197 after your score.
+                Want a deeper breakdown? Full Financial Diagnostic available for $197 after your score.
               </p>
             </div>
           </div>
@@ -382,10 +327,9 @@ const StressTest = () => {
                 Why Most Successful Families Are Still Financially Fragile
               </h2>
               <p className="text-lg text-foreground/80 mb-6">
-                Many married professionals earning strong incomes are one
-                unexpected event away from financial stress — not because they
-                lack intelligence, but because their structure was never
-                designed intentionally.
+                Many married professionals earning strong incomes are one unexpected event away
+                from financial stress — not because they lack intelligence, but because their
+                structure was never designed intentionally.
               </p>
               <ul className="space-y-3 text-foreground/80 mb-6">
                 <li className="flex items-start gap-2">
@@ -442,17 +386,14 @@ const StressTest = () => {
               <AnimatedSection key={card.title} variant="fade-up">
                 <div className="bg-card rounded-xl p-8 shadow-card h-full border border-border">
                   <card.icon className="h-10 w-10 text-sky-primary mb-4" />
-                  <h3 className="text-xl font-heading font-bold text-primary mb-3">
-                    {card.title}
-                  </h3>
+                  <h3 className="text-xl font-heading font-bold text-primary mb-3">{card.title}</h3>
                   <p className="text-foreground/70">{card.desc}</p>
                 </div>
               </AnimatedSection>
             ))}
           </div>
           <p className="text-center text-muted-foreground mt-8 text-sm italic max-w-2xl mx-auto">
-            This is not a generic calculator. This is a structured diagnostic
-            with interpretation.
+            This is not a generic calculator. This is a structured diagnostic with interpretation.
           </p>
         </div>
       </section>
@@ -496,10 +437,7 @@ const StressTest = () => {
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto text-center">
             {[
               { step: "1", label: "Complete the intake form" },
-              {
-                step: "2",
-                label: "Get your Financial Stability Score instantly",
-              },
+              { step: "2", label: "Get your Financial Stability Score instantly" },
               {
                 step: "3",
                 label:
@@ -531,17 +469,14 @@ const StressTest = () => {
                 🔍 Discover Where You Stand Financially — In Minutes
               </p>
               <p className="text-foreground/80 mb-3">
-                Complete this quick assessment to receive your personal
-                Financial Stability Score instantly. No payment is required to
-                see your score.
+                Complete this quick assessment to receive your personal Financial Stability Score instantly.
+                No payment is required to see your score.
               </p>
               <p className="text-foreground/70 text-sm">
                 After you get your results, you will have the option to:
               </p>
               <ul className="text-foreground/70 text-sm mt-2 space-y-1">
-                <li>
-                  ✅ Unlock your full diagnostic analysis and action plan ($197)
-                </li>
+                <li>✅ Unlock your full diagnostic analysis and action plan ($197)</li>
                 <li>✅ Or simply walk away with clarity — no pressure</li>
               </ul>
             </div>
@@ -555,9 +490,7 @@ const StressTest = () => {
                   id="firstName"
                   required
                   value={form.firstName}
-                  onChange={(e) =>
-                    setForm({ ...form, firstName: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, firstName: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -566,9 +499,7 @@ const StressTest = () => {
                   id="lastName"
                   required
                   value={form.lastName}
-                  onChange={(e) =>
-                    setForm({ ...form, lastName: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                 />
               </div>
             </div>
@@ -602,9 +533,7 @@ const StressTest = () => {
                   value={form.maritalStatus}
                   onValueChange={(v) => setForm({ ...form, maritalStatus: v })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Married">Married</SelectItem>
                     <SelectItem value="Single">Single</SelectItem>
@@ -619,9 +548,7 @@ const StressTest = () => {
                   value={form.children}
                   onValueChange={(v) => setForm({ ...form, children: v })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">0</SelectItem>
                     <SelectItem value="1">1</SelectItem>
@@ -638,9 +565,7 @@ const StressTest = () => {
                 value={form.primaryConcern}
                 onValueChange={(v) => setForm({ ...form, primaryConcern: v })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Protection">Protection</SelectItem>
                   <SelectItem value="Retirement">Retirement</SelectItem>
@@ -653,17 +578,13 @@ const StressTest = () => {
 
             {/* Household Snapshot */}
             <div className="pt-4">
-              <h3 className="text-xl font-heading font-bold text-primary mb-1">
-                Household Snapshot
-              </h3>
+              <h3 className="text-xl font-heading font-bold text-primary mb-1">Household Snapshot</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 These are approximate estimates. Precision is not required.
               </p>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="annualIncome">
-                    Approximate Annual Household Income *
-                  </Label>
+                  <Label htmlFor="annualIncome">Approximate Annual Household Income *</Label>
                   <Input
                     id="annualIncome"
                     type="text"
@@ -671,15 +592,11 @@ const StressTest = () => {
                     placeholder="150000"
                     required
                     value={form.annualIncome}
-                    onChange={(e) =>
-                      handleNumericChange("annualIncome", e.target.value)
-                    }
+                    onChange={(e) => handleNumericChange("annualIncome", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="monthlyExpenses">
-                    Approximate Monthly Essential Expenses *
-                  </Label>
+                  <Label htmlFor="monthlyExpenses">Approximate Monthly Essential Expenses *</Label>
                   <Input
                     id="monthlyExpenses"
                     type="text"
@@ -687,15 +604,11 @@ const StressTest = () => {
                     placeholder="6000"
                     required
                     value={form.monthlyExpenses}
-                    onChange={(e) =>
-                      handleNumericChange("monthlyExpenses", e.target.value)
-                    }
+                    onChange={(e) => handleNumericChange("monthlyExpenses", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="mortgageBalance">
-                    Current Mortgage Balance (Enter 0 if none) *
-                  </Label>
+                  <Label htmlFor="mortgageBalance">Current Mortgage Balance (Enter 0 if none) *</Label>
                   <Input
                     id="mortgageBalance"
                     type="text"
@@ -703,16 +616,11 @@ const StressTest = () => {
                     placeholder="250000"
                     required
                     value={form.mortgageBalance}
-                    onChange={(e) =>
-                      handleNumericChange("mortgageBalance", e.target.value)
-                    }
+                    onChange={(e) => handleNumericChange("mortgageBalance", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="consumerDebt">
-                    Total Consumer Debt (credit cards, car loans, student loans
-                    combined) *
-                  </Label>
+                  <Label htmlFor="consumerDebt">Total Consumer Debt (credit cards, car loans, student loans combined) *</Label>
                   <Input
                     id="consumerDebt"
                     type="text"
@@ -720,16 +628,11 @@ const StressTest = () => {
                     placeholder="30000"
                     required
                     value={form.consumerDebt}
-                    onChange={(e) =>
-                      handleNumericChange("consumerDebt", e.target.value)
-                    }
+                    onChange={(e) => handleNumericChange("consumerDebt", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lifeInsuranceCoverage">
-                    Total Current Life Insurance Coverage (household combined,
-                    enter 0 if none) *
-                  </Label>
+                  <Label htmlFor="lifeInsuranceCoverage">Total Current Life Insurance Coverage (household combined, enter 0 if none) *</Label>
                   <Input
                     id="lifeInsuranceCoverage"
                     type="text"
@@ -737,12 +640,7 @@ const StressTest = () => {
                     placeholder="500000"
                     required
                     value={form.lifeInsuranceCoverage}
-                    onChange={(e) =>
-                      handleNumericChange(
-                        "lifeInsuranceCoverage",
-                        e.target.value,
-                      )
-                    }
+                    onChange={(e) => handleNumericChange("lifeInsuranceCoverage", e.target.value)}
                   />
                 </div>
               </div>
@@ -752,20 +650,14 @@ const StressTest = () => {
               <Checkbox
                 id="consent"
                 checked={form.consent}
-                onCheckedChange={(v) =>
-                  setForm({ ...form, consent: v === true })
-                }
+                onCheckedChange={(v) => setForm({ ...form, consent: v === true })}
               />
-              <Label
-                htmlFor="consent"
-                className="text-sm text-foreground/70 leading-snug cursor-pointer"
-              >
+              <Label htmlFor="consent" className="text-sm text-foreground/70 leading-snug cursor-pointer">
                 I agree to be contacted regarding my results and next steps.
               </Label>
             </div>
             <p className="text-sm text-muted-foreground text-center">
-              ⚡ Takes less than 3 minutes. Your score will appear immediately
-              after submission.
+              ⚡ Takes less than 3 minutes. Your score will appear immediately after submission.
             </p>
             <Button
               type="submit"

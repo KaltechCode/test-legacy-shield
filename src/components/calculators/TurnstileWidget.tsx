@@ -17,7 +17,7 @@ declare global {
           "error-callback"?: () => void;
           "expired-callback"?: () => void;
           theme?: "light" | "dark" | "auto";
-        }
+        },
       ) => string;
       reset: (widgetId: string) => void;
       remove: (widgetId: string) => void;
@@ -25,25 +25,32 @@ declare global {
   }
 }
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE || "";
 
 // Development warning for missing configuration
 if (!TURNSTILE_SITE_KEY && import.meta.env.DEV) {
   console.warn(
     "[TurnstileWidget] VITE_TURNSTILE_SITE_KEY is not configured. " +
-    "The Turnstile widget will not render. " +
-    "Please set this environment variable with your Cloudflare Turnstile site key."
+      "The Turnstile widget will not render. " +
+      "Please set this environment variable with your Cloudflare Turnstile site key.",
   );
 }
 
-export const TurnstileWidget = ({ onVerify, onError, onExpire }: TurnstileWidgetProps) => {
+export const TurnstileWidget = ({
+  onVerify,
+  onError,
+  onExpire,
+}: TurnstileWidgetProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
-  const handleVerify = useCallback((token: string) => {
-    onVerify(token);
-  }, [onVerify]);
+  const handleVerify = useCallback(
+    (token: string) => {
+      onVerify(token);
+    },
+    [onVerify],
+  );
 
   const handleError = useCallback(() => {
     onError?.();

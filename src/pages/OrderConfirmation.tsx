@@ -24,9 +24,7 @@ function formatCurrency(amountCents: number, currency: string): string {
 const OrderConfirmation = () => {
   usePageTitle("Order Confirmed");
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading",
-  );
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [order, setOrder] = useState<OrderDetails | null>(null);
 
   useEffect(() => {
@@ -38,12 +36,9 @@ const OrderConfirmation = () => {
       }
 
       try {
-        const { data, error } = await supabase.functions.invoke(
-          "get-checkout-details",
-          {
-            body: { session_id: sessionId },
-          },
-        );
+        const { data, error } = await supabase.functions.invoke("get-checkout-details", {
+          body: { session_id: sessionId },
+        });
 
         if (error || !data?.paymentStatus) {
           setStatus("error");
@@ -71,8 +66,7 @@ const OrderConfirmation = () => {
     );
   }
 
-  // if (status === "error") {
-  if (false) {
+  if (status === "error") {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
         <div className="max-w-lg mx-auto text-center p-8">
@@ -81,8 +75,7 @@ const OrderConfirmation = () => {
             Unable to Confirm Order
           </h1>
           <p className="text-foreground/70 mb-8">
-            We could not retrieve your order details. Please check your email
-            for a confirmation, or contact support.
+            We could not retrieve your order details. Please check your email for a confirmation, or contact support.
           </p>
           <Button asChild variant="outline">
             <Link to="/">Return Home</Link>
@@ -103,8 +96,7 @@ const OrderConfirmation = () => {
               Your Order Is Confirmed
             </h1>
             <p className="text-lg text-foreground/70 mb-12">
-              Thank you for your purchase. A confirmation email has been sent to
-              your inbox.
+              Thank you for your purchase. A confirmation email has been sent to your inbox.
             </p>
 
             {/* Order Summary Card */}
@@ -116,36 +108,22 @@ const OrderConfirmation = () => {
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center py-3 border-b border-border">
-                  <span className="text-foreground/60 text-sm uppercase tracking-wide font-medium">
-                    Product
-                  </span>
-                  <span className="font-semibold text-primary">
-                    {order?.productName}
-                  </span>
+                  <span className="text-foreground/60 text-sm uppercase tracking-wide font-medium">Product</span>
+                  <span className="font-semibold text-primary">{order?.productName}</span>
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-border">
-                  <span className="text-foreground/60 text-sm uppercase tracking-wide font-medium">
-                    Amount Paid
-                  </span>
+                  <span className="text-foreground/60 text-sm uppercase tracking-wide font-medium">Amount Paid</span>
                   <span className="font-bold text-primary text-lg">
-                    {order
-                      ? formatCurrency(order.amountPaid, order.currency)
-                      : "—"}
+                    {order ? formatCurrency(order.amountPaid, order.currency) : "—"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-border">
-                  <span className="text-foreground/60 text-sm uppercase tracking-wide font-medium">
-                    Payment
-                  </span>
+                  <span className="text-foreground/60 text-sm uppercase tracking-wide font-medium">Payment</span>
                   <span className="font-semibold text-accent">✓ Confirmed</span>
                 </div>
                 <div className="flex justify-between items-center py-3">
-                  <span className="text-foreground/60 text-sm uppercase tracking-wide font-medium">
-                    Estimated Delivery
-                  </span>
-                  <span className="font-medium text-primary">
-                    5–10 business days
-                  </span>
+                  <span className="text-foreground/60 text-sm uppercase tracking-wide font-medium">Estimated Delivery</span>
+                  <span className="font-medium text-primary">5–10 business days</span>
                 </div>
               </div>
             </div>
@@ -153,9 +131,7 @@ const OrderConfirmation = () => {
             {/* Email notification */}
             <div className="flex items-center justify-center gap-2 text-foreground/60 mb-10">
               <Mail className="h-4 w-4" />
-              <p className="text-sm">
-                A confirmation email has been sent to your email address.
-              </p>
+              <p className="text-sm">A confirmation email has been sent to your email address.</p>
             </div>
 
             {/* CTA */}

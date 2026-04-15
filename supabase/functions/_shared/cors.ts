@@ -1,12 +1,10 @@
 // Allowed origins for CORS
 export const ALLOWED_ORIGINS = [
-  // "https://legacy-shield-suite.lovable.app",
-  // "https://kbklegacyshield.com",
-  // "https://www.kbklegacyshield.com",
+  "https://kbklegacyshield.com",
+  "https://www.kbklegacyshield.com",
+  "https://test-legacy-shield.vercel.app/",
   // Localhost for local development
   "http://localhost:8080",
-  "http://10.188.197.107:8080",
-  "http://172.25.224.1:8080",
 ];
 
 // Check if origin matches Lovable preview pattern

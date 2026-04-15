@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import nodemailer from "npm:nodemailer";
-
 import {
   getClientIP,
   applyRateLimits,
@@ -10,6 +7,9 @@ import {
 } from "../_shared/rateLimit.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { buildUnifiedEmail } from "../_shared/emailTemplate.ts";
+
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import transporter from "../_shared/createTrasport.ts";
 
 interface VerificationEmailRequest {
   email: string;
@@ -54,47 +54,32 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    // if (!resendApiKey) {
-    //   console.error("RESEND_API_KEY is not configured");
-    //   return new Response(
-    //     JSON.stringify({
-    //       success: false,
-    //       error: "Email service configuration is missing",
-    //     }),
-    //     {
-    //       status: 500,
-    //       headers: { "Content-Type": "application/json", ...corsHeaders },
-    //     },
-    //   );
-    // }
-
     // Apply rate limiting: per-IP and per-email
-    // const clientIP = getClientIP(req);
-    // const rateLimitChecks = [
-    //   {
-    //     key: email.toLowerCase(),
-    //     config: {
-    //       ...RateLimitPresets.HOURLY_STRICT,
-    //       keyPrefix: "send_verification_email",
-    //     },
-    //   },
-    // ];
-    // if (clientIP !== "unknown") {
-    //   rateLimitChecks.unshift({
-    //     key: clientIP,
-    //     config: {
-    //       ...RateLimitPresets.STANDARD,
-    //       keyPrefix: "send_verification_ip",
-    //     },
-    //   });
-    // }
+    const clientIP = getClientIP(req);
 
-    // const rateLimitResponse = applyRateLimits(rateLimitChecks, corsHeaders);
+    const rateLimitResponse = applyRateLimits(
+      [
+        {
+          key: clientIP,
+          config: {
+            ...RateLimitPresets.STANDARD,
+            keyPrefix: "send_verification_ip",
+          },
+        },
+        {
+          key: email.toLowerCase(),
+          config: {
+            ...RateLimitPresets.HOURLY_STRICT,
+            keyPrefix: "send_verification_email",
+          },
+        },
+      ],
+      corsHeaders,
+    );
 
-    // if (rateLimitResponse) {
-    //   return rateLimitResponse;
-    // }
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
 
     // Initialize Supabase client with service role
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -162,7 +147,6 @@ const handler = async (req: Request): Promise<Response> => {
         "If you didn't request this verification code, you can safely ignore this email.",
     });
 
-    // const resend = new Resend(resendApiKey);
     // const emailResponse = await resend.emails.send({
     //   from:
     //     Deno.env.get("EMAIL_FROM") ??
@@ -173,37 +157,15 @@ const handler = async (req: Request): Promise<Response> => {
     //   reply_to: Deno.env.get("EMAIL_REPLY_TO") ?? "support@kbklegacyshield.com",
     // });
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      auth: {
-        user: Deno.env.get("SMTP_USER") ?? "",
-        pass: Deno.env.get("SMTP_PASS") ?? "",
-      },
-    });
-
     const emailResponse = await transporter.sendMail({
       from:
         Deno.env.get("EMAIL_FROM") ??
         "KB&K Legacy Shield <no-reply@kbklegacyshield.com>",
       to: [email],
-      subject: "User Verification notification",
+      subject: "Verify Your Email - KB&K Legacy Shield",
       html: emailHTML,
+      replyTo: Deno.env.get("EMAIL_REPLY_TO") ?? "support@kbklegacyshield.com",
     });
-
-    if (emailResponse.error) {
-      console.error("Resend API error:", emailResponse.error);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Email provider rejected verification email",
-        }),
-        {
-          status: 502,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        },
-      );
-    }
 
     console.log("Email sent successfully:", emailResponse);
 
@@ -212,16 +174,17 @@ const handler = async (req: Request): Promise<Response> => {
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
-    const errorMessage =
-      error?.message || error?.toString() || "An unexpected error occurred.";
-    console.error("Error sending verification email:", errorMessage, error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        ...getCorsHeaders(req.headers.get("origin")),
+    console.error("Error sending verification email:", error);
+    return new Response(
+      JSON.stringify({ error: "An unexpected error occurred." }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...getCorsHeaders(req.headers.get("origin")),
+        },
       },
-    });
+    );
   }
 };
 

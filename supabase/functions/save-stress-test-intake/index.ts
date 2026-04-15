@@ -1,14 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
-import {
-  getClientIP,
-  applyRateLimits,
-  RateLimitPresets,
-} from "../_shared/rateLimit.ts";
-import {
-  verifyTurnstileToken,
-  turnstileErrorResponse,
-} from "../_shared/turnstile.ts";
+import { getClientIP, applyRateLimits, RateLimitPresets } from "../_shared/rateLimit.ts";
+import { verifyTurnstileToken, turnstileErrorResponse } from "../_shared/turnstile.ts";
 
 // Generate cryptographically random token
 function generateSecureToken(length = 64): string {
@@ -56,33 +49,21 @@ Deno.serve(async (req) => {
     } = body;
 
     // SECURITY: Verify Turnstile token FIRST
-    // if (!turnstile_token) {
-    //   return turnstileErrorResponse("Verification required. Please complete the security check.", corsHeaders);
-    // }
+    if (!turnstile_token) {
+      return turnstileErrorResponse("Verification required. Please complete the security check.", corsHeaders);
+    }
 
     const clientIP = getClientIP(req);
-    const turnstileValid = await verifyTurnstileToken(
-      turnstile_token,
-      clientIP,
-    );
+    const turnstileValid = await verifyTurnstileToken(turnstile_token, clientIP);
 
-    // if (!turnstileValid) {
-    //   return turnstileErrorResponse(
-    //     "Verification failed. Please try again.",
-    //     corsHeaders,
-    //   );
-    // }
+    if (!turnstileValid) {
+      return turnstileErrorResponse("Verification failed. Please try again.", corsHeaders);
+    }
 
     // Apply rate limiting per IP (after Turnstile verification)
-    const rateLimitResponse = applyRateLimits(
-      [
-        {
-          key: clientIP,
-          config: { ...RateLimitPresets.STANDARD, keyPrefix: "intake_ip" },
-        },
-      ],
-      corsHeaders,
-    );
+    const rateLimitResponse = applyRateLimits([
+      { key: clientIP, config: { ...RateLimitPresets.STANDARD, keyPrefix: 'intake_ip' } },
+    ], corsHeaders);
 
     if (rateLimitResponse) {
       return rateLimitResponse;
@@ -90,25 +71,15 @@ Deno.serve(async (req) => {
 
     // Basic validation
     if (
-      !first_name ||
-      !last_name ||
-      !email ||
-      !phone ||
-      !marital_status ||
-      !number_of_children ||
-      !primary_concern ||
-      annual_income == null ||
-      monthly_expenses == null ||
-      mortgage_balance == null ||
-      consumer_debt == null ||
+      !first_name || !last_name || !email || !phone ||
+      !marital_status || !number_of_children || !primary_concern ||
+      annual_income == null || monthly_expenses == null ||
+      mortgage_balance == null || consumer_debt == null ||
       life_insurance_coverage == null
     ) {
       return new Response(
         JSON.stringify({ error: "All fields are required." }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -116,13 +87,11 @@ Deno.serve(async (req) => {
     const sessionToken = generateSecureToken(64);
     const sessionTokenHash = await hashToken(sessionToken);
     // Token expires in 60 minutes
-    const sessionTokenExpiresAt = new Date(
-      Date.now() + 60 * 60 * 1000,
-    ).toISOString();
+    const sessionTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     const { data, error } = await supabase
@@ -150,10 +119,7 @@ Deno.serve(async (req) => {
       console.error("DB insert error:", error);
       return new Response(
         JSON.stringify({ error: "Failed to save intake data." }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -164,12 +130,10 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
         },
         body: JSON.stringify({ intake_id: data.id, skip_payment_check: true }),
-      }).catch((err) =>
-        console.error("Score trigger failed (non-blocking):", err),
-      );
+      }).catch((err) => console.error("Score trigger failed (non-blocking):", err));
     } catch (triggerErr) {
       console.error("Score trigger error (non-blocking):", triggerErr);
     }
@@ -177,19 +141,13 @@ Deno.serve(async (req) => {
     // Return the intake ID and session token (token is only returned once)
     return new Response(
       JSON.stringify({ id: data.id, session_token: sessionToken }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred." }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

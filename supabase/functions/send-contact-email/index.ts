@@ -1,20 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import nodemailer from "npm:nodemailer";
+import { Resend } from "npm:resend@2.0.0";
 import { getCorsHeaders } from "../_shared/cors.ts";
-import {
-  buildUnifiedEmail,
-  buildAdminNotificationEmail,
-} from "../_shared/emailTemplate.ts";
-import {
-  getClientIP,
-  applyRateLimits,
-  RateLimitPresets,
-} from "../_shared/rateLimit.ts";
-import {
-  verifyTurnstileToken,
-  turnstileErrorResponse,
-} from "../_shared/turnstile.ts";
+import { buildUnifiedEmail, buildAdminNotificationEmail } from "../_shared/emailTemplate.ts";
+import { getClientIP, applyRateLimits, RateLimitPresets } from "../_shared/rateLimit.ts";
+import { verifyTurnstileToken, turnstileErrorResponse } from "../_shared/turnstile.ts";
 
 const TAG = "[contact-form]";
 
@@ -26,56 +15,26 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    auth: {
-      user: Deno.env.get("SMTP_USER") ?? "",
-      pass: Deno.env.get("SMTP_PASS") ?? "",
-    },
-  });
-
   try {
-    const { name, email, phone, message } = await req.json();
+    const { name, email, phone, message, turnstile_token } = await req.json();
 
     // SECURITY: Verify Turnstile token FIRST
-    // if (!turnstile_token) {
-    //   return turnstileErrorResponse(
-    //     "Verification required. Please complete the security check.",
-    //     corsHeaders,
-    //   );
-    // }
+    if (!turnstile_token) {
+      return turnstileErrorResponse("Verification required. Please complete the security check.", corsHeaders);
+    }
 
     const clientIP = getClientIP(req);
-    // const turnstileValid = await verifyTurnstileToken(
-    //   turnstile_token,
-    //   clientIP,
-    // );
+    const turnstileValid = await verifyTurnstileToken(turnstile_token, clientIP);
 
-    // if (!turnstileValid) {
-    //   return turnstileErrorResponse(
-    //     "Verification failed. Please try again.",
-    //     corsHeaders,
-    //   );
-    // }
+    if (!turnstileValid) {
+      return turnstileErrorResponse("Verification failed. Please try again.", corsHeaders);
+    }
 
     // Apply rate limiting per IP and per email
-    const rateLimitResponse = applyRateLimits(
-      [
-        {
-          key: clientIP,
-          config: { ...RateLimitPresets.STRICT, keyPrefix: "contact_ip" },
-        },
-        {
-          key: email?.toLowerCase() || "",
-          config: {
-            ...RateLimitPresets.AUTH_OPERATION,
-            keyPrefix: "contact_email",
-          },
-        },
-      ],
-      corsHeaders,
-    );
+    const rateLimitResponse = applyRateLimits([
+      { key: clientIP, config: { ...RateLimitPresets.STRICT, keyPrefix: 'contact_ip' } },
+      { key: email?.toLowerCase() || '', config: { ...RateLimitPresets.AUTH_OPERATION, keyPrefix: 'contact_email' } },
+    ], corsHeaders);
 
     if (rateLimitResponse) {
       return rateLimitResponse;
@@ -84,17 +43,14 @@ Deno.serve(async (req) => {
     if (!name || !email) {
       return new Response(
         JSON.stringify({ error: "Name and email are required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Save to database
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     const { data: contactRow, error: dbError } = await supabase
@@ -105,10 +61,10 @@ Deno.serve(async (req) => {
 
     if (dbError) {
       console.error(`${TAG} DB insert error:`, dbError);
-      return new Response(JSON.stringify({ error: "Failed to save message" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Failed to save message" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const submissionId = contactRow?.id;
@@ -118,7 +74,7 @@ Deno.serve(async (req) => {
       emailType: string,
       recipient: string,
       status: "sent" | "failed",
-      errorMessage?: string,
+      errorMessage?: string
     ) {
       try {
         await supabase.from("email_delivery_logs").insert({
@@ -132,25 +88,26 @@ Deno.serve(async (req) => {
         console.error(`${TAG} Failed to write delivery log:`, logErr);
       }
     }
-    const emailFrom =
-      Deno.env.get("EMAIL_FROM") || "noreply@kbklegacyshield.com";
-    const emailReplyTo =
-      Deno.env.get("EMAIL_REPLY_TO") || "info@kbklegacyshield.com";
+
+    // Send email via Resend
+    const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
+    const emailFrom = Deno.env.get("EMAIL_FROM") || "noreply@kbklegacyshield.com";
+    const emailReplyTo = Deno.env.get("EMAIL_REPLY_TO") || "info@kbklegacyshield.com";
 
     // Format timestamp in Eastern Time
-    const submittedAt =
-      new Date().toLocaleString("en-US", {
-        timeZone: "America/New_York",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }) + " ET";
+    const submittedAt = new Date().toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }) + " ET";
 
     const phoneDisplay = phone || "Not provided";
     const messageDisplay = message || "No message provided";
+    
 
     const internalHtml = buildAdminNotificationEmail({
       title: "New Contact Form Submission",
@@ -204,53 +161,35 @@ ${messageDisplay}`;
 
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const { error: emailError } = await transporter.sendMail({
+        const { error: emailError } = await resend.emails.send({
           from: emailFrom,
-          to: [email],
+          to: [emailReplyTo],
+          replyTo: email,
           subject: `Contact Form — ${name} | ${email}`,
           html: internalHtml,
           text: internalText,
         });
 
         if (emailError) {
-          internalErrorMsg =
-            typeof emailError === "object"
-              ? JSON.stringify(emailError)
-              : String(emailError);
-          console.error(
-            `${TAG} Internal notification attempt ${attempt} failed:`,
-            emailError,
-          );
+          internalErrorMsg = typeof emailError === "object" ? JSON.stringify(emailError) : String(emailError);
+          console.error(`${TAG} Internal notification attempt ${attempt} failed:`, emailError);
         } else {
           internalSent = true;
-          console.log(
-            `${TAG} Internal notification sent successfully (attempt ${attempt}).`,
-          );
+          console.log(`${TAG} Internal notification sent successfully (attempt ${attempt}).`);
           break;
         }
       } catch (sendErr) {
-        internalErrorMsg =
-          sendErr instanceof Error ? sendErr.message : String(sendErr);
-        console.error(
-          `${TAG} Internal notification attempt ${attempt} exception:`,
-          sendErr,
-        );
+        internalErrorMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
+        console.error(`${TAG} Internal notification attempt ${attempt} exception:`, sendErr);
       }
     }
 
     // Log internal delivery
-    await logDelivery(
-      "internal",
-      emailReplyTo,
-      internalSent ? "sent" : "failed",
-      internalSent ? undefined : internalErrorMsg,
-    );
+    await logDelivery("internal", emailReplyTo, internalSent ? "sent" : "failed", internalSent ? undefined : internalErrorMsg);
 
     // If internal failed after retry, send system alert
     if (!internalSent) {
-      console.error(
-        `${TAG} CRITICAL: Internal notification failed after 2 attempts for submission ${submissionId}.`,
-      );
+      console.error(`${TAG} CRITICAL: Internal notification failed after 2 attempts for submission ${submissionId}.`);
       try {
         const alertHtml = buildAdminNotificationEmail({
           title: "⚠ SYSTEM ALERT: Internal Email Failed",
@@ -280,44 +219,33 @@ Submitted: ${submittedAt}
 Resend Error: ${internalErrorMsg}
 
 Message was saved to the database. Please review and follow up manually.`;
-        await transporter.sendMail({
+
+        await resend.emails.send({
           from: emailFrom,
           to: [emailReplyTo, "kingsley.ekinde@gmail.com"],
           subject: `⚠ SYSTEM ALERT — Contact Form Email Failed | ${email}`,
           html: alertHtml,
           text: alertText,
         });
-
         console.log(`${TAG} System alert email sent to ${emailReplyTo}.`);
       } catch (alertErr) {
-        console.error(
-          `${TAG} CRITICAL: System alert email also failed:`,
-          alertErr,
-        );
+        console.error(`${TAG} CRITICAL: System alert email also failed:`, alertErr);
       }
 
       return new Response(
-        JSON.stringify({
-          error: "Message saved but email notification failed",
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        JSON.stringify({ error: "Message saved but email notification failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // --- Auto-responder to submitter (non-critical) ---
-    const bookingUrl =
-      "https://tidycal.com/kingsley-ekinde/30-minute-meeting-1vr60yy";
+    const bookingUrl = "https://tidycal.com/kingsley-ekinde/30-minute-meeting-1vr60yy";
 
     const autoResponderHtml = buildUnifiedEmail({
       headerSubtitle: "MESSAGE RECEIVED",
       customGreeting: `Hello ${name},`,
-      contextStatement:
-        "Thank you for reaching out to KB&amp;K Legacy Shield. We received your message and a member of our team will review it and respond as soon as possible.",
-      interpretation:
-        "If you would like to take the next step right now, you can schedule your complimentary consultation below.",
+      contextStatement: "Thank you for reaching out to KB&amp;K Legacy Shield. We received your message and a member of our team will review it and respond as soon as possible.",
+      interpretation: "If you would like to take the next step right now, you can schedule your complimentary consultation below.",
       ctaText: "Schedule Your Complimentary Consultation",
       ctaUrl: bookingUrl,
       secondaryText: "Respectfully, KB&amp;K Legacy Shield Team",
@@ -342,7 +270,7 @@ If you did not request this message, you can ignore this email.`;
     let autoErrorMsg = "";
 
     try {
-      const { error: autoError } = await transporter.sendMail({
+      const { error: autoError } = await resend.emails.send({
         from: emailFrom,
         to: [email],
         replyTo: emailReplyTo,
@@ -352,41 +280,29 @@ If you did not request this message, you can ignore this email.`;
       });
 
       if (autoError) {
-        autoErrorMsg =
-          typeof autoError === "object"
-            ? JSON.stringify(autoError)
-            : String(autoError);
-        console.error(
-          `${TAG} Auto-responder failed (non-blocking):`,
-          autoError,
-        );
+        autoErrorMsg = typeof autoError === "object" ? JSON.stringify(autoError) : String(autoError);
+        console.error(`${TAG} Auto-responder failed (non-blocking):`, autoError);
       } else {
         autoSent = true;
         console.log(`${TAG} Auto-responder sent to: ${email}`);
       }
     } catch (autoErr) {
-      autoErrorMsg =
-        autoErr instanceof Error ? autoErr.message : String(autoErr);
+      autoErrorMsg = autoErr instanceof Error ? autoErr.message : String(autoErr);
       console.error(`${TAG} Auto-responder exception (non-blocking):`, autoErr);
     }
 
     // Log auto-responder delivery
-    await logDelivery(
-      "auto_responder",
-      email,
-      autoSent ? "sent" : "failed",
-      autoSent ? undefined : autoErrorMsg,
-    );
+    await logDelivery("auto_responder", email, autoSent ? "sent" : "failed", autoSent ? undefined : autoErrorMsg);
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err) {
     console.error(`${TAG} Unexpected error:`, err);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Internal server error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
