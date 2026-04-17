@@ -8,15 +8,15 @@ const StressTestDiagnosticForm = () => {
   usePageTitle("Stress Test — Detailed Diagnostic");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const intakeId = sessionStorage.getItem("diagnostic_intake_id");
-    if (!intakeId) {
-      navigate("/stress-test/diagnostic", { replace: true });
-    }
-  }, [navigate]);
+  // useEffect(() => {
+  //   const intakeId = sessionStorage.getItem("diagnostic_intake_id");
+  //   if (!intakeId) {
+  //     navigate("/stress-test/diagnostic", { replace: true });
+  //   }
+  // }, [navigate]);
 
-  const intakeId = sessionStorage.getItem("diagnostic_intake_id");
-  if (!intakeId) return null;
+  // const intakeId = sessionStorage.getItem("diagnostic_intake_id");
+  // if (!intakeId) return null;
 
   return (
     <div className="min-h-screen bg-secondary">

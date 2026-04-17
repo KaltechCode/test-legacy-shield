@@ -1,7 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { buildUnifiedEmail, buildAdminNotificationEmail } from "../_shared/emailTemplate.ts";
+
+
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import transporter from "../_shared/createTrasport.ts";
 
 // ── Scoring Engine (server-side only) ──
 
