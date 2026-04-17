@@ -8,12 +8,16 @@ interface LogoProps {
 }
 
 const sizeClasses = {
-  header: "h-14 md:h-16 lg:h-[72px]",
-  footer: "h-11 md:h-13 lg:h-14",
+  header: "h-14 md:h-16 lg:h-[42px] xl:h-[48px] 2xl:h-[54px] 3xl:h-[72px]",
+  footer: "h-11 md:h-12 lg:h-[32px] xl:h-[48px] 2xl:h-[56px] 3xl:h-[64px]",
   section: "h-14 md:h-16 lg:h-[72px]",
 };
 
-const Logo = ({ variant = "dark", size = "header", className = "" }: LogoProps) => {
+const Logo = ({
+  variant = "dark",
+  size = "header",
+  className = "",
+}: LogoProps) => {
   const src = variant === "light" ? kbkLogoLight : kbkLogoDark;
   const alt = "KB&K Legacy Shield Logo";
 

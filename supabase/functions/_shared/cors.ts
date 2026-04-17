@@ -17,13 +17,23 @@ export const isAllowedPreviewOrigin = (origin: string): boolean => {
   );
 };
 
+// Check if origin is a Vercel deployment domain
+export const isAllowedVercelOrigin = (origin: string): boolean => {
+  return (
+    /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin) ||
+    /^https:\/\/[a-z0-9-]+\.vercel\.sh$/.test(origin)
+  );
+};
+
 // Get CORS headers based on request origin
 export const getCorsHeaders = (
   origin: string | null,
 ): Record<string, string> => {
   const allowedOrigin =
     origin &&
-    (ALLOWED_ORIGINS.includes(origin) || isAllowedPreviewOrigin(origin))
+    (ALLOWED_ORIGINS.includes(origin) ||
+      isAllowedPreviewOrigin(origin) ||
+      isAllowedVercelOrigin(origin))
       ? origin
       : ALLOWED_ORIGINS[0];
 

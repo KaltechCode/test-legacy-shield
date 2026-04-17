@@ -5,28 +5,31 @@ import heroImage from "@/assets/hero-family-legacy.jpg";
 
 const HeroSection = () => {
   return (
-    <section className="relative bg-gradient-hero text-white py-20 lg:py-32 overflow-hidden">
-      <div 
+    <section className="relative top-0 left-0 bg-gradient-hero text-white py-20 lg:py-32 overflow-hidden h-[calc(100vh_-_80px) lg:h-[calc(100vh_-_96px)]]">
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
         style={{ backgroundImage: `url(${heroImage})` }}
       ></div>
-      <div className="absolute inset-0 bg-navy-primary/60"></div>
+      <div className="absolute inset-0 bg-navy-primary/60 top-0 left-0"></div>
+
       <div className="container mx-auto px-4 lg:px-8 relative">
         <div className="max-w-4xl mx-auto text-center">
           {/* Main Headline */}
           <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6 leading-tight">
-            <span className="text-sky-primary">Guiding Families from Knowledge to Lasting Legacy</span>
+            <span className="text-sky-primary">
+              Guiding Families from Knowledge to Lasting Legacy
+            </span>
           </h1>
-          
+
           {/* Subheadline */}
           <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-3xl mx-auto">
-            We help families move from financial fragility to financial strength through 
-            protection, structure, and long-term planning.
+            We help families move from financial fragility to financial strength
+            through protection, structure, and long-term planning.
           </p>
 
           {/* CTA Button */}
           <div className="flex flex-col items-center mb-16">
-            <Button 
+            <Button
               asChild
               size="lg"
               className="bg-white text-navy-primary border-2 border-navy-primary hover:bg-navy-primary hover:text-white font-heading font-semibold px-8 py-6 text-lg transition-colors"
@@ -35,7 +38,9 @@ const HeroSection = () => {
                 Get Your Financial Stability Score
               </a>
             </Button>
-            <p className="mt-3 text-sm text-white/70">Takes less than 3 minutes to start</p>
+            <p className="mt-3 text-sm text-white/70">
+              Takes less than 3 minutes to start
+            </p>
           </div>
 
           {/* Trust Indicators */}
@@ -54,14 +59,16 @@ const HeroSection = () => {
             </AnimatedSection>
             <AnimatedSection variant="fade-up" delay={300}>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-                <div className="text-3xl font-heading font-bold mb-2">$50M+</div>
+                <div className="text-3xl font-heading font-bold mb-2">
+                  $50M+
+                </div>
                 <div className="text-white/80">Assets Managed</div>
               </div>
             </AnimatedSection>
           </div>
         </div>
       </div>
-      
+
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
         <div className="animate-bounce">
