@@ -15,42 +15,42 @@ const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
-async function verifyStripeSignature(
-  payload: string,
-  sigHeader: string,
-  secret: string,
-): Promise<boolean> {
-  const parts = sigHeader.split(",");
-  const timestamp = parts.find((p) => p.startsWith("t="))?.split("=")[1];
-  const signatures = parts
-    .filter((p) => p.startsWith("v1="))
-    .map((p) => p.split("=")[1]);
+// async function verifyStripeSignature(
+//   payload: string,
+//   sigHeader: string,
+//   secret: string,
+// ): Promise<boolean> {
+//   const parts = sigHeader.split(",");
+//   const timestamp = parts.find((p) => p.startsWith("t="))?.split("=")[1];
+//   const signatures = parts
+//     .filter((p) => p.startsWith("v1="))
+//     .map((p) => p.split("=")[1]);
 
-  if (!timestamp || signatures.length === 0) return false;
+//   if (!timestamp || signatures.length === 0) return false;
 
-  // Reject if timestamp is older than 5 minutes
-  const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp)) > 300) return false;
+//   // Reject if timestamp is older than 5 minutes
+//   const now = Math.floor(Date.now() / 1000);
+//   if (Math.abs(now - parseInt(timestamp)) > 300) return false;
 
-  const signedPayload = `${timestamp}.${payload}`;
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signatureBytes = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(signedPayload),
-  );
-  const expectedSig = Array.from(new Uint8Array(signatureBytes))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+//   const signedPayload = `${timestamp}.${payload}`;
+//   const key = await crypto.subtle.importKey(
+//     "raw",
+//     new TextEncoder().encode(secret),
+//     { name: "HMAC", hash: "SHA-256" },
+//     false,
+//     ["sign"],
+//   );
+//   const signatureBytes = await crypto.subtle.sign(
+//     "HMAC",
+//     key,
+//     new TextEncoder().encode(signedPayload),
+//   );
+//   const expectedSig = Array.from(new Uint8Array(signatureBytes))
+//     .map((b) => b.toString(16).padStart(2, "0"))
+//     .join("");
 
-  return signatures.some((s) => s === expectedSig);
-}
+//   return signatures.some((s) => s === expectedSig);
+// }
 
 function formatCurrency(amountCents: number, currency: string): string {
   const amount = amountCents / 100;

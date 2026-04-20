@@ -250,23 +250,25 @@ const StressTest = () => {
       const { data: stripeData, error: stripeError } =
         await supabase.functions.invoke("handle-stripe-checkout-completed", {
           body: {
-            id: "evt_test_checkout_session_completed",
-            object: "event",
-            api_version: "2023-08-01",
-            created: 1710000000,
-            data: {
-              object: {
-                id: scoreData?.intakeId,
-                object: "checkout.session",
-                customer_details: {
-                  email: form.email,
-                  name: `${form.firstName} ${form.lastName}`,
-                },
-                amount_total: 19700,
-                currency: "usd",
-                payment_status: "paid",
-                metadata: {
-                  product_name: "Deeper financial diagnostic",
+            eventData: {
+              id: "evt_test_checkout_session_completed",
+              object: "event",
+              api_version: "2023-08-01",
+              created: 1710000000,
+              data: {
+                object: {
+                  id: scoreData?.intakeId,
+                  object: "checkout.session",
+                  customer_details: {
+                    email: form.email,
+                    name: `${form.firstName} ${form.lastName}`,
+                  },
+                  amount_total: 19700,
+                  currency: "usd",
+                  payment_status: "paid",
+                  metadata: {
+                    product_name: "Deeper financial diagnostic",
+                  },
                 },
               },
             },
