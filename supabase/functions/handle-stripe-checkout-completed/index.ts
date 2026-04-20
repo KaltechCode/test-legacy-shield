@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { buildUnifiedEmail } from "../_shared/emailTemplate.ts";
 import transporter from "../_shared/createTrasport.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
 const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY") || "";
@@ -61,64 +62,33 @@ function formatCurrency(amountCents: number, currency: string): string {
 
 Deno.serve(async (req) => {
   // Stripe webhooks are POST only — no CORS needed
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+  const origin = req.headers.get("origin");
+  console.log("Request origin:", origin);
+  const corsHeaders = getCorsHeaders(origin);
+  console.log("CORS headers:", corsHeaders);
+
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
-
-  // const body = await req.text();
-  // const sigHeader = req.headers.get("stripe-signature");
-
-  // if (!sigHeader || !STRIPE_WEBHOOK_SECRET) {
-  //   console.error("Missing stripe-signature header or webhook secret.");
-  //   return new Response("Unauthorized", { status: 401 });
-  // }
-
-  // // Verify signature
-  // const valid = await verifyStripeSignature(
-  //   body,
-  //   sigHeader,
-  //   STRIPE_WEBHOOK_SECRET,
-  // );
-  // if (!valid) {
-  //   console.error("Invalid Stripe signature.");
-  //   return new Response("Invalid signature", { status: 401 });
-  // }
 
   let event;
   try {
-    // event = JSON.parse(body);
-
-    event = {
-      id: "evt_test_checkout_session_completed",
-      object: "event",
-      api_version: "2023-08-01",
-      created: 1710000000,
-      data: {
-        object: {
-          id: "cs_test_123456789",
-          object: "checkout.session",
-          customer_details: {
-            email: "onifadejohnsontolu@gmail.com",
-            name: "Johnson Onifade",
-          },
-          amount_total: 19700,
-          currency: "usd",
-          payment_status: "paid",
-          metadata: {
-            product_name: "Deeper financial diagnostic",
-          },
-        },
-      },
-      livemode: false,
-      type: "checkout.session.completed",
-    };
-  } catch {
-    return new Response("Invalid JSON", { status: 400 });
+    const body = await req.json();
+    event = body.eventData ?? body;
+  } catch (err) {
+    console.error("Failed to parse JSON body:", err);
+    return new Response("Invalid JSON", {
+      status: 400,
+      headers: { "Content-Type": "text/plain", ...corsHeaders },
+    });
   }
 
   // Only handle checkout.session.completed
   if (event.type !== "checkout.session.completed") {
-    return new Response(JSON.stringify({ received: true }), { status: 200 });
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 
   const session = event.data.object;
@@ -135,6 +105,7 @@ Deno.serve(async (req) => {
     console.log(`Session ${sessionId} already processed. Skipping.`);
     return new Response(JSON.stringify({ received: true, duplicate: true }), {
       status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
 
@@ -161,6 +132,7 @@ Deno.serve(async (req) => {
     });
     return new Response(JSON.stringify({ received: true, email: false }), {
       status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
 
@@ -183,6 +155,7 @@ Deno.serve(async (req) => {
       console.log(`Duplicate insert for session ${sessionId}. Skipping.`);
       return new Response(JSON.stringify({ received: true, duplicate: true }), {
         status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
     console.error("Error inserting checkout event:", insertError);
@@ -258,17 +231,13 @@ Deno.serve(async (req) => {
       html: emailHtml,
     });
 
-    if (emailResponse.ok) {
+    if (emailResponse.messageId) {
       emailSent = true;
       console.log(
         `Confirmation email sent to ${customerEmail} for session ${sessionId}`,
       );
     } else {
-      // const errBody = await emailResponse.text();
-      console.error(
-        `Email transport error (${emailResponse.status}):`,
-        // errBody,
-      );
+      console.error("Email transport error: No messageId returned");
     }
   } catch (emailError) {
     console.error("Failed to send confirmation email:", emailError);
@@ -299,7 +268,10 @@ Deno.serve(async (req) => {
     JSON.stringify({ received: true, email_sent: emailSent }),
     {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders,
+      },
     },
   );
 });

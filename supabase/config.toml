@@ -30,7 +30,7 @@ verify_jwt = false
 [functions.save-stress-test-intake]
 verify_jwt = false
 
-[functions.update-stress-test-payment]
+[functions.update-stress-test-intake]
 verify_jwt = false
 
 [functions.process-stress-test-score]
