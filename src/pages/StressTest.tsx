@@ -243,12 +243,15 @@ const StressTest = () => {
     window.location.href = stripeUrl.toString();
   };
 
-  const handeleProceed = async () => {
+  const handleProceed = async () => {
     try {
       const { data, error } = await supabase.functions.invoke(
         "update-stress-test-intake",
         { body: { intake_id: scoreData?.intakeId || "" } },
       );
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Update failed");
+
       const { data: stripeData, error: stripeError } =
         await supabase.functions.invoke("handle-stripe-checkout-completed", {
           body: {
@@ -278,16 +281,13 @@ const StressTest = () => {
             type: "checkout.session.completed",
           },
         });
-      if (error) throw error;
       if (stripeError) throw stripeError;
+      if (!stripeData?.received) throw new Error("Webhook processing failed");
 
-      navigate("/detailed-diagnostic");
+      navigate("/stress-test/diagnostic");
     } catch (error) {
-      console.error("Intake save error:", error);
-      toast.error(
-        "Something went wrong saving your information. Please try again.",
-      );
-      setSubmitting(false);
+      console.error("Proceed error:", error);
+      toast.error("Something went wrong proceeding. Please try again.");
     }
   };
 

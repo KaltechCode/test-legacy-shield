@@ -34,18 +34,24 @@ Deno.serve(async (req) => {
     const email = body.email?.trim?.()?.toLowerCase?.();
 
     if (!email || typeof email !== "string") {
-      return new Response(JSON.stringify({ success: false, error: "Email is required." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: "Email is required." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return new Response(JSON.stringify({ success: false, error: "Invalid email format." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid email format." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -67,7 +73,10 @@ Deno.serve(async (req) => {
       if (dbError) {
         console.error("DB error:", dbError);
         return new Response(
-          JSON.stringify({ success: false, error: "An error occurred. Please try again." }),
+          JSON.stringify({
+            success: false,
+            error: "Unable to process your request to financial diagnostic.",
+          }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -103,7 +112,10 @@ Deno.serve(async (req) => {
       if (updateError) {
         console.error("Update error:", updateError);
         return new Response(
-          JSON.stringify({ success: false, error: "An error occurred. Please try again." }),
+          JSON.stringify({
+            success: false,
+            error: "An error occurred. Please try again.",
+          }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -178,7 +190,10 @@ Deno.serve(async (req) => {
 
       if (!code || typeof code !== "string" || code.length !== 6) {
         return new Response(
-          JSON.stringify({ success: false, error: "A valid 6-digit code is required." }),
+          JSON.stringify({
+            success: false,
+            error: "A valid 6-digit code is required.",
+          }),
           {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -217,7 +232,10 @@ Deno.serve(async (req) => {
       if (dbError) {
         console.error("DB error:", dbError);
         return new Response(
-          JSON.stringify({ success: false, error: "An error occurred. Please try again." }),
+          JSON.stringify({
+            success: false,
+            error: "An error occurred. Please try again.",
+          }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -311,7 +329,9 @@ Deno.serve(async (req) => {
 
     // Unknown action
     return new Response(
-      JSON.stringify({ success: false, error: "Invalid action. Use 'send_code' or 'verify_code'.",
+      JSON.stringify({
+        success: false,
+        error: "Invalid action. Use 'send_code' or 'verify_code'.",
       }),
       {
         status: 400,
@@ -321,7 +341,10 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
-      JSON.stringify({ success: false, error: "An unexpected error occurred." }),
+      JSON.stringify({
+        success: false,
+        error: "An unexpected error occurred.",
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
