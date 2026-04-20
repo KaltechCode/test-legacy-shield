@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       life_insurance_coverage == null
     ) {
       return new Response(
-        JSON.stringify({ error: "All fields are required." }),
+        JSON.stringify({ success: false, error: "All fields are required." }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
     if (error) {
       console.error("DB insert error:", error);
       return new Response(
-        JSON.stringify({ error: "Failed to save intake data." }),
+        JSON.stringify({ success: false, error: "Failed to save intake data." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
-      JSON.stringify({ error: "An unexpected error occurred." }),
+      JSON.stringify({ success: false, error: "An unexpected error occurred." }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

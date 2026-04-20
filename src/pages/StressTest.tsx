@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,6 +122,7 @@ function getInsightMessage(score: number): string {
 const StressTest = () => {
   usePageTitle("Financial Stability Score");
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
   const [scoreData, setScoreData] = useState<{
     score: number;
     category: string;
@@ -251,7 +253,7 @@ const StressTest = () => {
         await supabase.functions.invoke("handle-stripe-checkout-completed", {
           body: {
             eventData: {
-              id: "evt_test_checkout_session_completed",
+              id: `${scoreData?.intakeId}_test_checkout_session_completed`,
               object: "event",
               api_version: "2023-08-01",
               created: 1710000000,
@@ -278,6 +280,8 @@ const StressTest = () => {
         });
       if (error) throw error;
       if (stripeError) throw stripeError;
+
+      navigate("/detailed-diagnostic");
     } catch (error) {
       console.error("Intake save error:", error);
       toast.error(

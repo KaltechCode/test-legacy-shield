@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
 
     if (!intake_id) {
       console.error("Missing intake_id");
-      return new Response(JSON.stringify({ error: "intake_id is required" }), {
+      return new Response(JSON.stringify({ success: false, error: "intake_id is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
     if (fetchError || !intake) {
       console.error("Failed to fetch intake:", fetchError);
       return new Response(
-        JSON.stringify({ error: "Intake record not found" }),
+        JSON.stringify({ success: false, error: "Intake record not found" }),
         {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
     if (skip_payment_check !== true && intake.payment_status !== "paid") {
       console.warn("Intake not paid, skipping:", intake_id);
       return new Response(
-        JSON.stringify({ error: "Payment not verified", skipped: true }),
+        JSON.stringify({ success: false, error: "Payment not verified", skipped: true }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -212,7 +212,7 @@ Deno.serve(async (req) => {
       if (intake[field] == null || isNaN(Number(intake[field]))) {
         console.error(`Missing or invalid field: ${field}`, intake[field]);
         return new Response(
-          JSON.stringify({ error: `Missing required field: ${field}` }),
+          JSON.stringify({ success: false, error: `Missing required field: ${field}` }),
           {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error("Failed to update score:", updateError);
-      return new Response(JSON.stringify({ error: "Failed to update score" }), {
+      return new Response(JSON.stringify({ success: false, error: "Failed to update score" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -277,7 +277,7 @@ Deno.serve(async (req) => {
         .update({ preliminary_email_sent: false })
         .eq("id", intake_id);
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
+        JSON.stringify({ success: false, error: "Email service not configured" }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -338,7 +338,7 @@ Deno.serve(async (req) => {
         .from("financial_stress_test_intakes")
         .update({ preliminary_email_sent: false })
         .eq("id", intake_id);
-      return new Response(JSON.stringify({ error: "Failed to send email" }), {
+      return new Response(JSON.stringify({ success: false, error: "Failed to send email" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
+    return new Response(JSON.stringify({ success: false, error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

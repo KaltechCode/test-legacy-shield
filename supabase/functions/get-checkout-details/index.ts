@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+    return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), {
       status: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     const { session_id } = await req.json();
 
     if (!session_id || typeof session_id !== "string") {
-      return new Response(JSON.stringify({ error: "Missing session_id" }), {
+      return new Response(JSON.stringify({ success: false, error: "Missing session_id" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
 
     if (!stripeRes.ok) {
       console.error("Stripe API error:", stripeRes.status);
-      return new Response(JSON.stringify({ error: "Could not retrieve session details." }), {
+      return new Response(JSON.stringify({ success: false, error: "Could not retrieve session details." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: "An unexpected error occurred." }), {
+    return new Response(JSON.stringify({ success: false, error: "An unexpected error occurred." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

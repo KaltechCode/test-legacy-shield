@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
 
     if (!intake_id || !wizard_data) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields." }),
+        JSON.stringify({ success: false, error: "Missing required fields." }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -194,8 +194,7 @@ Deno.serve(async (req) => {
 
     if (intakeErr || !intake) {
       return new Response(
-        JSON.stringify({
-          error:
+        JSON.stringify({ success: false, error:
             "Payment verification required before accessing the detailed diagnostic.",
         }),
         {
@@ -214,8 +213,7 @@ Deno.serve(async (req) => {
 
     if (existing) {
       return new Response(
-        JSON.stringify({
-          error: "Your detailed diagnostic has already been submitted.",
+        JSON.stringify({ success: false, error: "Your detailed diagnostic has already been submitted.",
         }),
         {
           status: 409,
@@ -371,7 +369,7 @@ Deno.serve(async (req) => {
     if (insertErr) {
       console.error("Insert error:", insertErr.message);
       return new Response(
-        JSON.stringify({ error: "Failed to save diagnostic." }),
+        JSON.stringify({ success: false, error: "Failed to save diagnostic." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -439,7 +437,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
-      JSON.stringify({ error: "An unexpected error occurred." }),
+      JSON.stringify({ success: false, error: "An unexpected error occurred." }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

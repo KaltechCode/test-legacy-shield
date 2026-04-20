@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     const email = body.email?.trim?.()?.toLowerCase?.();
 
     if (!email || typeof email !== "string") {
-      return new Response(JSON.stringify({ error: "Email is required." }), {
+      return new Response(JSON.stringify({ success: false, error: "Email is required." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return new Response(JSON.stringify({ error: "Invalid email format." }), {
+      return new Response(JSON.stringify({ success: false, error: "Invalid email format." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
       if (dbError) {
         console.error("DB error:", dbError);
         return new Response(
-          JSON.stringify({ error: "An error occurred. Please try again." }),
+          JSON.stringify({ success: false, error: "An error occurred. Please try again." }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -76,12 +76,12 @@ Deno.serve(async (req) => {
       }
 
       // Always return code_sent: true to prevent email enumeration
-      if (!intake) {
-        return new Response(JSON.stringify({ code_sent: true }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      // if (!intake) {
+      //   return new Response(JSON.stringify({ code_sent: true }), {
+      //     status: 200,
+      //     headers: { ...corsHeaders, "Content-Type": "application/json" },
+      //   });
+      // }
 
       // Generate 6-digit OTP
       const otpArray = new Uint32Array(1);
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       if (updateError) {
         console.error("Update error:", updateError);
         return new Response(
-          JSON.stringify({ error: "An error occurred. Please try again." }),
+          JSON.stringify({ success: false, error: "An error occurred. Please try again." }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
 
       if (!code || typeof code !== "string" || code.length !== 6) {
         return new Response(
-          JSON.stringify({ error: "A valid 6-digit code is required." }),
+          JSON.stringify({ success: false, error: "A valid 6-digit code is required." }),
           {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
       if (dbError) {
         console.error("DB error:", dbError);
         return new Response(
-          JSON.stringify({ error: "An error occurred. Please try again." }),
+          JSON.stringify({ success: false, error: "An error occurred. Please try again." }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -311,8 +311,7 @@ Deno.serve(async (req) => {
 
     // Unknown action
     return new Response(
-      JSON.stringify({
-        error: "Invalid action. Use 'send_code' or 'verify_code'.",
+      JSON.stringify({ success: false, error: "Invalid action. Use 'send_code' or 'verify_code'.",
       }),
       {
         status: 400,
@@ -322,7 +321,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
-      JSON.stringify({ error: "An unexpected error occurred." }),
+      JSON.stringify({ success: false, error: "An unexpected error occurred." }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

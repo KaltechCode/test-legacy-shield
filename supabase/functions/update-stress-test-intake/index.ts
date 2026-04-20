@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+    return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), {
       status: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const { intake_id } = await req.json();
 
     if (!intake_id) {
-      return new Response(JSON.stringify({ error: "intake_id is required" }), {
+      return new Response(JSON.stringify({ success: false, error: "intake_id is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     if (error) {
       console.error("Update error:", error);
       return new Response(
-        JSON.stringify({ error: "Failed to update intake record." }),
+        JSON.stringify({ success: false, error: "Failed to update intake record." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error." }), {
+    return new Response(JSON.stringify({ success: false, error: "Internal server error." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

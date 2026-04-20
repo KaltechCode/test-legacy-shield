@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     if (!name || !email) {
       return new Response(
-        JSON.stringify({ error: "Name and email are required" }),
+        JSON.stringify({ success: false, error: "Name and email are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     if (dbError) {
       console.error(`${TAG} DB insert error:`, dbError);
       return new Response(
-        JSON.stringify({ error: "Failed to save message" }),
+        JSON.stringify({ success: false, error: "Failed to save message" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -233,7 +233,7 @@ Message was saved to the database. Please review and follow up manually.`;
       }
 
       return new Response(
-        JSON.stringify({ error: "Message saved but email notification failed" }),
+        JSON.stringify({ success: false, error: "Message saved but email notification failed" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -301,7 +301,7 @@ If you did not request this message, you can ignore this email.`;
   } catch (err) {
     console.error(`${TAG} Unexpected error:`, err);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ success: false, error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

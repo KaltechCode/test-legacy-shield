@@ -88,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
     // SECURITY: Verify Turnstile token FIRST before any other processing
     if (!turnstile_token) {
       return new Response(
-        JSON.stringify({ error: "Verification required. Please complete the security check." }),
+        JSON.stringify({ success: false, error: "Verification required. Please complete the security check." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -98,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     if (!turnstileValid) {
       return new Response(
-        JSON.stringify({ error: "Verification failed. Please try again." }),
+        JSON.stringify({ success: false, error: "Verification failed. Please try again." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -122,7 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Validate required fields
     if (!firstName?.trim() || !lastName?.trim() || !phone?.trim() || !email?.trim()) {
       return new Response(
-        JSON.stringify({ error: "All fields are required" }),
+        JSON.stringify({ success: false, error: "All fields are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -131,7 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
       return new Response(
-        JSON.stringify({ error: "Invalid email format" }),
+        JSON.stringify({ success: false, error: "Invalid email format" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -140,7 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
     const phoneRegex = /^[\d\s\-\+\(\)]{10,15}$/;
     if (!phoneRegex.test(phone.trim())) {
       return new Response(
-        JSON.stringify({ error: "Invalid phone number format" }),
+        JSON.stringify({ success: false, error: "Invalid phone number format" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -149,7 +149,7 @@ const handler = async (req: Request): Promise<Response> => {
     const normalizedEmail = email.trim().toLowerCase();
     if (!checkRateLimit(normalizedEmail)) {
       return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        JSON.stringify({ success: false, error: "Rate limit exceeded. Please try again later." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -228,7 +228,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error("Error in create-lead function:", error);
     return new Response(
-      JSON.stringify({ error: "An unexpected error occurred." }),
+      JSON.stringify({ success: false, error: "An unexpected error occurred." }),
       { status: 500, headers: { ...getCorsHeaders(req.headers.get("origin")), "Content-Type": "application/json" } }
     );
   }

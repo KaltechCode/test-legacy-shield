@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     const { intake_id } = await req.json();
 
     if (!intake_id) {
-      return new Response(JSON.stringify({ error: "session_id is required" }), {
+      return new Response(JSON.stringify({ success: false, error: "session_id is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     // if (!stripeSecretKey) {
     //   console.error("STRIPE_SECRET_KEY is not configured");
     //   return new Response(
-    //     JSON.stringify({ error: "Server configuration error." }),
+    //     JSON.stringify({ success: false, error: "Server configuration error." }),
     //     { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     //   );
     // }
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     //   const errText = await stripeResponse.text();
     //   console.error("Stripe API error:", stripeResponse.status, errText);
     //   return new Response(
-    //     JSON.stringify({ error: "Failed to verify payment with Stripe." }),
+    //     JSON.stringify({ success: false, error: "Failed to verify payment with Stripe." }),
     //     { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     //   );
     // }
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     //     status: session.status,
     //   });
     //   return new Response(
-    //     JSON.stringify({ error: "Payment could not be verified. Please contact support.", verified: false }),
+    //     JSON.stringify({ success: false, error: "Payment could not be verified. Please contact support.", verified: false }),
     //     { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     //   );
     // }
@@ -66,8 +66,7 @@ Deno.serve(async (req) => {
     if (!intakeId) {
       console.error("No client_reference_id found in Stripe session");
       return new Response(
-        JSON.stringify({
-          error:
+        JSON.stringify({ success: false, error:
             "Could not match payment to intake record. Please contact support.",
           verified: false,
         }),
@@ -92,7 +91,7 @@ Deno.serve(async (req) => {
     if (error) {
       console.error("Update error:", error);
       return new Response(
-        JSON.stringify({ error: "Failed to update payment status." }),
+        JSON.stringify({ success: false, error: "Failed to update payment status." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -129,7 +128,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error." }), {
+    return new Response(JSON.stringify({ success: false, error: "Internal server error." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
