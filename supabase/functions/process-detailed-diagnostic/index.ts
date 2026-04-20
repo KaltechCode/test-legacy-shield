@@ -1,7 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
-import { buildUnifiedEmail, buildAdminNotificationEmail } from "../_shared/emailTemplate.ts";
-
+import {
+  buildUnifiedEmail,
+  buildAdminNotificationEmail,
+} from "../_shared/emailTemplate.ts";
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import transporter from "../_shared/createTrasport.ts";
@@ -11,24 +13,30 @@ import transporter from "../_shared/createTrasport.ts";
 function scoreIncomeStability(d: Record<string, number>): number {
   const takeHome = d.monthly_take_home_income;
   if (takeHome <= 0) return 0;
-  const ratio = (d.monthly_essential_expenses + d.monthly_lifestyle_expenses) / takeHome;
-  if (ratio <= 0.50) return 100;
+  const ratio =
+    (d.monthly_essential_expenses + d.monthly_lifestyle_expenses) / takeHome;
+  if (ratio <= 0.5) return 100;
   if (ratio <= 0.65) return 75;
-  if (ratio <= 0.80) return 50;
+  if (ratio <= 0.8) return 50;
   if (ratio <= 0.95) return 25;
   return 0;
 }
 
 function scoreProtection(d: Record<string, number>): number {
-  const totalDebt = d.mortgage_balance + d.total_consumer_debt + d.student_loans + d.credit_card_debt;
-  const annualIncome = d.client_annual_gross_income + d.spouse_annual_gross_income;
+  const totalDebt =
+    d.mortgage_balance +
+    d.total_consumer_debt +
+    d.student_loans +
+    d.credit_card_debt;
+  const annualIncome =
+    d.client_annual_gross_income + d.spouse_annual_gross_income;
   const required = totalDebt + annualIncome * d.income_replacement_years;
   if (required <= 0) return 100;
   const actual = d.life_insurance_client + d.life_insurance_spouse;
   const ratio = actual / required;
   if (ratio >= 1.0) return 100;
   if (ratio >= 0.75) return 75;
-  if (ratio >= 0.50) return 50;
+  if (ratio >= 0.5) return 50;
   if (ratio >= 0.25) return 25;
   return 0;
 }
@@ -50,9 +58,9 @@ function scoreRetirement(d: Record<string, number>): number {
   if (required <= 0) return 100;
   const ratio = d.total_retirement_savings / required;
   if (ratio >= 0.75) return 100;
-  if (ratio >= 0.50) return 75;
+  if (ratio >= 0.5) return 75;
   if (ratio >= 0.25) return 50;
-  if (ratio >= 0.10) return 25;
+  if (ratio >= 0.1) return 25;
   return 0;
 }
 
@@ -97,15 +105,15 @@ function buildAdminEmailHTML(
   });
 }
 
-function buildUserConfirmationEmailHTML(
-  firstName: string,
-): string {
-  const bookingUrl = "https://tidycal.com/kingsley-ekinde/30-minute-meeting-1vr60yy";
+function buildUserConfirmationEmailHTML(firstName: string): string {
+  const bookingUrl =
+    "https://tidycal.com/kingsley-ekinde/30-minute-meeting-1vr60yy";
 
   return buildUnifiedEmail({
     headerSubtitle: "SUBMISSION CONFIRMED",
     firstName,
-    contextStatement: "Thank you for completing your comprehensive Financial Stress Diagnostic. We have successfully received your submission and your personalized detailed report is now being prepared.",
+    contextStatement:
+      "Thank you for completing your comprehensive Financial Stress Diagnostic. We have successfully received your submission and your personalized detailed report is now being prepared.",
     cardContent: `
       <p style="color:#0A2240;font-size:16px;font-weight:700;margin:0 0 16px;">What happens next:</p>
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
@@ -114,15 +122,17 @@ function buildUserConfirmationEmailHTML(
         <tr><td style="padding:6px 0;color:#4A5568;font-size:14px;">✓ You will receive your detailed report within <strong>24 hours</strong></td></tr>
       </table>
     `,
-    interpretation: "If you would like to discuss your financial situation or have any questions, you can schedule a complimentary consultation below.",
+    interpretation:
+      "If you would like to discuss your financial situation or have any questions, you can schedule a complimentary consultation below.",
     ctaText: "Schedule Your Complimentary Consultation",
     ctaUrl: bookingUrl,
   });
 }
 
 function buildUserConfirmationEmailText(firstName: string): string {
-  const bookingUrl = "https://tidycal.com/kingsley-ekinde/30-minute-meeting-1vr60yy";
-  
+  const bookingUrl =
+    "https://tidycal.com/kingsley-ekinde/30-minute-meeting-1vr60yy";
+
   return `Your Financial Diagnostics Submission Has Been Received
 
 Hello ${firstName},
@@ -160,27 +170,38 @@ Deno.serve(async (req) => {
     if (!intake_id || !wizard_data) {
       return new Response(
         JSON.stringify({ error: "Missing required fields." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
     // 1) Verify intake exists and is paid
     const { data: intake, error: intakeErr } = await supabase
       .from("financial_stress_test_intakes")
-      .select("id, email, first_name, last_name, phone, marital_status, number_of_children, primary_concern, payment_status")
+      .select(
+        "id, email, first_name, last_name, phone, marital_status, number_of_children, primary_concern, payment_status",
+      )
       .eq("id", intake_id)
       .eq("payment_status", "paid")
       .maybeSingle();
 
     if (intakeErr || !intake) {
       return new Response(
-        JSON.stringify({ error: "Payment verification required before accessing the detailed diagnostic." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error:
+            "Payment verification required before accessing the detailed diagnostic.",
+        }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -193,22 +214,41 @@ Deno.serve(async (req) => {
 
     if (existing) {
       return new Response(
-        JSON.stringify({ error: "Your detailed diagnostic has already been submitted." }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: "Your detailed diagnostic has already been submitted.",
+        }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     // 3) Extract and validate numeric fields
     const d: Record<string, number> = {};
     const numericFields = [
-      "client_annual_gross_income", "spouse_annual_gross_income",
-      "monthly_take_home_income", "monthly_essential_expenses", "monthly_lifestyle_expenses",
-      "emergency_fund_balance", "other_liquid_savings",
-      "total_retirement_savings", "total_non_retirement_investments",
-      "mortgage_balance", "total_consumer_debt", "student_loans", "credit_card_debt",
-      "life_insurance_client", "life_insurance_spouse", "income_replacement_years",
-      "expected_retirement_age", "desired_monthly_retirement_income", "annual_retirement_contributions",
-      "number_of_children", "estimated_college_funding_goal", "current_college_savings",
+      "client_annual_gross_income",
+      "spouse_annual_gross_income",
+      "monthly_take_home_income",
+      "monthly_essential_expenses",
+      "monthly_lifestyle_expenses",
+      "emergency_fund_balance",
+      "other_liquid_savings",
+      "total_retirement_savings",
+      "total_non_retirement_investments",
+      "mortgage_balance",
+      "total_consumer_debt",
+      "student_loans",
+      "credit_card_debt",
+      "life_insurance_client",
+      "life_insurance_spouse",
+      "income_replacement_years",
+      "expected_retirement_age",
+      "desired_monthly_retirement_income",
+      "annual_retirement_contributions",
+      "number_of_children",
+      "estimated_college_funding_goal",
+      "current_college_savings",
     ];
 
     for (const field of numericFields) {
@@ -222,21 +262,44 @@ Deno.serve(async (req) => {
     const protection = scoreProtection(d);
     const liquidity = scoreLiquidity(d);
     const retirement = scoreRetirement(d);
-    const totalScore = 0.25 * income + 0.30 * protection + 0.20 * liquidity + 0.25 * retirement;
+    const totalScore =
+      0.25 * income + 0.3 * protection + 0.2 * liquidity + 0.25 * retirement;
     const classification = classify(totalScore);
 
     const pillarScores = { income, protection, liquidity, retirement };
 
     // Ratios (per specification: use client_annual_gross_income only, essential expenses only)
-    const totalDebt = d.mortgage_balance + d.total_consumer_debt + d.student_loans + d.credit_card_debt;
-    const essential_expense_ratio = d.monthly_take_home_income > 0 ? d.monthly_essential_expenses / d.monthly_take_home_income : 0;
-    const liquidity_months = d.monthly_essential_expenses > 0 ? (d.emergency_fund_balance + d.other_liquid_savings) / d.monthly_essential_expenses : 0;
-    const debt_ratio = d.client_annual_gross_income > 0 ? totalDebt / d.client_annual_gross_income : 0;
-    const required_coverage = d.mortgage_balance + totalDebt + (d.client_annual_gross_income * d.income_replacement_years);
+    const totalDebt =
+      d.mortgage_balance +
+      d.total_consumer_debt +
+      d.student_loans +
+      d.credit_card_debt;
+    const essential_expense_ratio =
+      d.monthly_take_home_income > 0
+        ? d.monthly_essential_expenses / d.monthly_take_home_income
+        : 0;
+    const liquidity_months =
+      d.monthly_essential_expenses > 0
+        ? (d.emergency_fund_balance + d.other_liquid_savings) /
+          d.monthly_essential_expenses
+        : 0;
+    const debt_ratio =
+      d.client_annual_gross_income > 0
+        ? totalDebt / d.client_annual_gross_income
+        : 0;
+    const required_coverage =
+      d.mortgage_balance +
+      totalDebt +
+      d.client_annual_gross_income * d.income_replacement_years;
     const actual_coverage = d.life_insurance_client + d.life_insurance_spouse;
-    const protection_ratio = required_coverage > 0 ? actual_coverage / required_coverage : 0;
-    const required_retirement_capital = d.desired_monthly_retirement_income * 12 * 25;
-    const retirement_funding_ratio = required_retirement_capital > 0 ? d.total_retirement_savings / required_retirement_capital : 0;
+    const protection_ratio =
+      required_coverage > 0 ? actual_coverage / required_coverage : 0;
+    const required_retirement_capital =
+      d.desired_monthly_retirement_income * 12 * 25;
+    const retirement_funding_ratio =
+      required_retirement_capital > 0
+        ? d.total_retirement_savings / required_retirement_capital
+        : 0;
 
     const ratios = {
       essential_expense_ratio,
@@ -255,14 +318,19 @@ Deno.serve(async (req) => {
       { label: "Protection Gap", severity: 1 - protection_ratio },
       { label: "Liquidity Shortfall", severity: (6 - liquidity_months) / 6 },
       { label: "Debt Pressure", severity: Math.max(debt_ratio - 1, 0) },
-      { label: "Retirement Funding Gap", severity: 1 - retirement_funding_ratio },
+      {
+        label: "Retirement Funding Gap",
+        severity: 1 - retirement_funding_ratio,
+      },
     ].sort((a, b) => b.severity - a.severity);
 
     const top_risk_1 = riskItems[0]?.label ?? null;
     const top_risk_2 = riskItems[1]?.label ?? null;
     const top_risk_3 = riskItems[2]?.label ?? null;
 
-    console.log(`Diagnostic scored for ${intake_id}: ${totalScore.toFixed(1)} (${classification})`);
+    console.log(
+      `Diagnostic scored for ${intake_id}: ${totalScore.toFixed(1)} (${classification})`,
+    );
     console.log(`Top risks: ${top_risk_1}, ${top_risk_2}, ${top_risk_3}`);
 
     // 5) Save to database
@@ -304,79 +372,78 @@ Deno.serve(async (req) => {
       console.error("Insert error:", insertErr.message);
       return new Response(
         JSON.stringify({ error: "Failed to save diagnostic." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     // 6) Send admin notification email
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (resendApiKey) {
-      const resend = new Resend(resendApiKey);
 
-      try {
-        const adminRecipients = ["kingsley.ekinde@gmail.com"];
-        const replyTo = Deno.env.get("EMAIL_REPLY_TO");
-        if (replyTo && replyTo !== "kingsley.ekinde@gmail.com") {
-          adminRecipients.push(replyTo);
-        }
-
-        const adminHTML = buildAdminEmailHTML(
-          intake.first_name,
-          intake.last_name,
-          intake.email,
-          pillarScores,
-          totalScore,
-          classification,
-          ratios,
-        );
-
-        await resend.emails.send({
-          from: Deno.env.get("EMAIL_FROM") ??
-            "KB&K Legacy Shield <no-reply@kbklegacyshield.com>",
-          to: adminRecipients,
-          subject: `New Detailed Diagnostic — ${intake.first_name} ${intake.last_name}`,
-          html: adminHTML,
-        });
-
-        console.log("Admin notification email sent");
-      } catch (emailErr) {
-        console.error("Admin email failed:", emailErr);
-        // Don't fail the submission if admin email fails
+    try {
+      const adminRecipients = ["test@kaltechconsultancy.tech"];
+      const replyTo = Deno.env.get("EMAIL_REPLY_TO");
+      if (replyTo && replyTo !== "test@kaltechconsultancy.tech") {
+        adminRecipients.push(replyTo);
       }
 
-      // 7) Send user confirmation email (non-blocking)
-      try {
-        const userHTML = buildUserConfirmationEmailHTML(
-          intake.first_name,
-        );
-        const userText = buildUserConfirmationEmailText(intake.first_name);
+      const adminHTML = buildAdminEmailHTML(
+        intake.first_name,
+        intake.last_name,
+        intake.email,
+        pillarScores,
+        totalScore,
+        classification,
+        ratios,
+      );
 
-        await resend.emails.send({
-          from: Deno.env.get("EMAIL_FROM") ??
-            "KB&K Legacy Shield <no-reply@kbklegacyshield.com>",
-          to: [intake.email],
-          replyTo: Deno.env.get("EMAIL_REPLY_TO") ?? "info@kbklegacyshield.com",
-          subject: "Your Financial Diagnostics Submission Has Been Received",
-          html: userHTML,
-          text: userText,
-        });
+      await transporter.sendMail({
+        from: Deno.env.get("EMAIL_FROM"),
+        to: [adminRecipients],
+        subject: `New Detailed Diagnostic — ${intake.first_name} ${intake.last_name}`,
+        html: adminHTML,
+      });
 
-        console.log(`User confirmation email sent to: ${intake.email}`);
-      } catch (userEmailErr) {
-        console.error("User confirmation email failed (non-blocking):", userEmailErr);
-        // Don't fail the submission if user email fails
-      }
+      console.log("Admin notification email sent");
+    } catch (emailErr) {
+      console.error("Admin email failed:", emailErr);
+      // Don't fail the submission if admin email fails
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // 7) Send user confirmation email (non-blocking)
+    try {
+      const userHTML = buildUserConfirmationEmailHTML(intake.first_name);
+      const userText = buildUserConfirmationEmailText(intake.first_name);
+
+      await transporter.sendMail({
+        from: Deno.env.get("EMAIL_FROM"),
+        to: [intake.email],
+        subject: "Your Financial Diagnostics Submission Has Been Received",
+        html: userHTML,
+        text: userText,
+      });
+      console.log(`User confirmation email sent to: ${intake.email}`);
+    } catch (userEmailErr) {
+      console.error(
+        "User confirmation email failed (non-blocking):",
+        userEmailErr,
+      );
+      // Don't fail the submission if user email fails
+    }
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

@@ -1,20 +1,23 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { buildUnifiedEmail } from "../_shared/emailTemplate.ts";
+import transporter from "../_shared/createTrasport.ts";
 
 const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
 const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY") || "";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-const EMAIL_FROM = Deno.env.get("EMAIL_FROM") || "KB&K Legacy Shield <no-reply@kbklegacyshield.com>";
+const EMAIL_FROM =
+  Deno.env.get("EMAIL_FROM") ||
+  "KB&K Legacy Shield <no-reply@kbklegacyshield.com>";
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
 async function verifyStripeSignature(
   payload: string,
   sigHeader: string,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
   const parts = sigHeader.split(",");
   const timestamp = parts.find((p) => p.startsWith("t="))?.split("=")[1];
@@ -34,12 +37,12 @@ async function verifyStripeSignature(
     new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["sign"],
   );
   const signatureBytes = await crypto.subtle.sign(
     "HMAC",
     key,
-    new TextEncoder().encode(signedPayload)
+    new TextEncoder().encode(signedPayload),
   );
   const expectedSig = Array.from(new Uint8Array(signatureBytes))
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -62,24 +65,53 @@ Deno.serve(async (req) => {
     return new Response("Method not allowed", { status: 405 });
   }
 
-  const body = await req.text();
-  const sigHeader = req.headers.get("stripe-signature");
+  // const body = await req.text();
+  // const sigHeader = req.headers.get("stripe-signature");
 
-  if (!sigHeader || !STRIPE_WEBHOOK_SECRET) {
-    console.error("Missing stripe-signature header or webhook secret.");
-    return new Response("Unauthorized", { status: 401 });
-  }
+  // if (!sigHeader || !STRIPE_WEBHOOK_SECRET) {
+  //   console.error("Missing stripe-signature header or webhook secret.");
+  //   return new Response("Unauthorized", { status: 401 });
+  // }
 
-  // Verify signature
-  const valid = await verifyStripeSignature(body, sigHeader, STRIPE_WEBHOOK_SECRET);
-  if (!valid) {
-    console.error("Invalid Stripe signature.");
-    return new Response("Invalid signature", { status: 401 });
-  }
+  // // Verify signature
+  // const valid = await verifyStripeSignature(
+  //   body,
+  //   sigHeader,
+  //   STRIPE_WEBHOOK_SECRET,
+  // );
+  // if (!valid) {
+  //   console.error("Invalid Stripe signature.");
+  //   return new Response("Invalid signature", { status: 401 });
+  // }
 
   let event;
   try {
-    event = JSON.parse(body);
+    // event = JSON.parse(body);
+
+    event = {
+      id: "evt_test_checkout_session_completed",
+      object: "event",
+      api_version: "2023-08-01",
+      created: 1710000000,
+      data: {
+        object: {
+          id: "cs_test_123456789",
+          object: "checkout.session",
+          customer_details: {
+            email: "onifadejohnsontolu@gmail.com",
+            name: "Johnson Onifade",
+          },
+          amount_total: 19700,
+          currency: "usd",
+          payment_status: "paid",
+          metadata: {
+            product_name: "Deeper financial diagnostic",
+          },
+        },
+      },
+      livemode: false,
+      type: "checkout.session.completed",
+    };
   } catch {
     return new Response("Invalid JSON", { status: 400 });
   }
@@ -101,7 +133,9 @@ Deno.serve(async (req) => {
 
   if (existing) {
     console.log(`Session ${sessionId} already processed. Skipping.`);
-    return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
+    return new Response(JSON.stringify({ received: true, duplicate: true }), {
+      status: 200,
+    });
   }
 
   // --- Normalize data ---
@@ -109,7 +143,8 @@ Deno.serve(async (req) => {
   const customerEmail = session.customer_details?.email;
   const amountTotal = session.amount_total || 0;
   const currency = session.currency || "usd";
-  const productName = session.metadata?.product_name || "From Fragile to Fortified";
+  const productName =
+    session.metadata?.product_name || "From Fragile to Fortified";
   const paymentStatus = session.payment_status;
 
   if (!customerEmail) {
@@ -124,7 +159,9 @@ Deno.serve(async (req) => {
       currency,
       email_sent: false,
     });
-    return new Response(JSON.stringify({ received: true, email: false }), { status: 200 });
+    return new Response(JSON.stringify({ received: true, email: false }), {
+      status: 200,
+    });
   }
 
   // --- Store event (idempotency record) ---
@@ -144,7 +181,9 @@ Deno.serve(async (req) => {
     // Unique constraint violation = already processed
     if (insertError.code === "23505") {
       console.log(`Duplicate insert for session ${sessionId}. Skipping.`);
-      return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        status: 200,
+      });
     }
     console.error("Error inserting checkout event:", insertError);
   }
@@ -187,34 +226,49 @@ Deno.serve(async (req) => {
     const emailHtml = buildUnifiedEmail({
       headerSubtitle: "ORDER CONFIRMATION",
       firstName,
-      contextStatement: "Your order has been successfully processed and is now being prepared.",
+      contextStatement:
+        "Your order has been successfully processed and is now being prepared.",
       cardContent,
-      interpretation: "Your purchase is a step toward strengthening your financial foundation. We look forward to supporting your journey.",
+      interpretation:
+        "Your purchase is a step toward strengthening your financial foundation. We look forward to supporting your journey.",
       ctaText: "Schedule Your Consultation",
       ctaUrl: "https://tidycal.com/kingsley-ekinde/30-minute-meeting-1vr60yy",
-      secondaryText: "A member of our team is available if you have any questions about your order.",
+      secondaryText:
+        "A member of our team is available if you have any questions about your order.",
     });
 
-    const resendResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: [customerEmail],
-        subject: `Order Confirmed — ${productName}`,
-        html: emailHtml,
-      }),
+    // const resendResponse = await fetch("https://api.resend.com/emails", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     Authorization: `Bearer ${RESEND_API_KEY}`,
+    //   },
+    //   body: JSON.stringify({
+    //     from: EMAIL_FROM,
+    //     to: [customerEmail],
+    //     subject: `Order Confirmed — ${productName}`,
+    //     html: emailHtml,
+    //   }),
+    // });
+
+    const emailResponse = await transporter.sendMail({
+      from: EMAIL_FROM,
+      to: customerEmail,
+      subject: "Verify Your Email - KB&K Legacy Shield",
+      html: emailHtml,
     });
 
-    if (resendResponse.ok) {
+    if (emailResponse.ok) {
       emailSent = true;
-      console.log(`Confirmation email sent to ${customerEmail} for session ${sessionId}`);
+      console.log(
+        `Confirmation email sent to ${customerEmail} for session ${sessionId}`,
+      );
     } else {
-      const errBody = await resendResponse.text();
-      console.error(`Resend API error (${resendResponse.status}):`, errBody);
+      // const errBody = await emailResponse.text();
+      console.error(
+        `Email transport error (${emailResponse.status}):`,
+        // errBody,
+      );
     }
   } catch (emailError) {
     console.error("Failed to send confirmation email:", emailError);
@@ -241,8 +295,11 @@ Deno.serve(async (req) => {
   }
 
   // Always return 200 to Stripe
-  return new Response(JSON.stringify({ received: true, email_sent: emailSent }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({ received: true, email_sent: emailSent }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 });

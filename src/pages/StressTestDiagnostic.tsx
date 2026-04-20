@@ -31,26 +31,29 @@ const StressTestDiagnostic = () => {
     const checkSessionToken = async () => {
       const sessionToken = sessionStorage.getItem("intake_session_token");
 
-      // if (sessionToken) {
-      //   try {
-      //     const { data, error: fnError } = await supabase.functions.invoke(
-      //       "validate-intake-session",
-      //       { body: { session_token: sessionToken } }
-      //     );
+      if (sessionToken) {
+        try {
+          const { data, error: fnError } = await supabase.functions.invoke(
+            "validate-intake-session",
+            { body: { session_token: sessionToken } },
+          );
 
-      //     if (!fnError && data?.valid && data?.intake_id) {
-      //       sessionStorage.setItem("diagnostic_intake_id", data.intake_id);
-      //       if (data.prefill) {
-      //         sessionStorage.setItem("diagnostic_prefill", JSON.stringify(data.prefill));
-      //       }
-      //       navigate("/detailed-diagnostic", { replace: true });
-      //       return;
-      //     }
-      //   } catch {
-      //     // Session validation failed
-      //   }
-      //   sessionStorage.removeItem("intake_session_token");
-      // }
+          if (!fnError && data?.valid && data?.intake_id) {
+            sessionStorage.setItem("diagnostic_intake_id", data.intake_id);
+            if (data.prefill) {
+              sessionStorage.setItem(
+                "diagnostic_prefill",
+                JSON.stringify(data.prefill),
+              );
+            }
+            navigate("/detailed-diagnostic", { replace: true });
+            return;
+          }
+        } catch {
+          // Session validation failed
+        }
+        sessionStorage.removeItem("intake_session_token");
+      }
 
       setCheckingSession(false);
     };

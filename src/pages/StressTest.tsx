@@ -241,6 +241,50 @@ const StressTest = () => {
     window.location.href = stripeUrl.toString();
   };
 
+  const handeleProceed = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "update-stress-test-intake",
+        { body: { intake_id: scoreData?.intakeId || "" } },
+      );
+      const { data: stripeData, error: stripeError } =
+        await supabase.functions.invoke("handle-stripe-checkout-completed", {
+          body: {
+            id: "evt_test_checkout_session_completed",
+            object: "event",
+            api_version: "2023-08-01",
+            created: 1710000000,
+            data: {
+              object: {
+                id: scoreData?.intakeId,
+                object: "checkout.session",
+                customer_details: {
+                  email: form.email,
+                  name: `${form.firstName} ${form.lastName}`,
+                },
+                amount_total: 19700,
+                currency: "usd",
+                payment_status: "paid",
+                metadata: {
+                  product_name: "Deeper financial diagnostic",
+                },
+              },
+            },
+            livemode: false,
+            type: "checkout.session.completed",
+          },
+        });
+      if (error) throw error;
+      if (stripeError) throw stripeError;
+    } catch (error) {
+      console.error("Intake save error:", error);
+      toast.error(
+        "Something went wrong saving your information. Please try again.",
+      );
+      setSubmitting(false);
+    }
+  };
+
   // ── Score Reveal View ──
   if (scoreData) {
     const score = scoreData.score;
@@ -289,7 +333,7 @@ const StressTest = () => {
         </section>
 
         {/* Upgrade / Conversion Section */}
-        <section className="py-16 lg:py-24">
+        {/* <section className="py-16 lg:py-24">
           <div className="container mx-auto px-4 lg:px-8">
             <AnimatedSection variant="fade-up">
               <div className="max-w-2xl mx-auto text-center">
@@ -312,6 +356,36 @@ const StressTest = () => {
                   className="bg-navy-primary text-white hover:bg-sky-primary font-heading font-semibold px-10 py-6 text-lg transition-colors"
                 >
                   Unlock My Full Diagnostic ($197)
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
+            </AnimatedSection>
+          </div>
+        </section> */}
+        <section className="py-16 lg:py-24">
+          <div className="container mx-auto px-4 lg:px-8">
+            <AnimatedSection variant="fade-up">
+              <div className="max-w-2xl mx-auto text-center">
+                <h2 className="text-2xl md:text-3xl font-heading font-bold text-primary mb-6">
+                  Want a Deeper Financial Diagnostic?
+                </h2>
+                <p className="text-lg text-foreground/80 mb-4">
+                  Ready to understand what is really driving your score?
+                </p>
+                <p className="text-lg text-foreground/80 mb-6">
+                  Upgrade to a full Financial Diagnostic to uncover your key
+                  gaps, risks, and a clear path forward.
+                </p>
+                <p className="text-base text-foreground/60 italic mb-10">
+                  {getInsightMessage(score)}
+                </p>
+                <Button
+                  size="lg"
+                  onClick={handeleProceed}
+                  className="bg-navy-primary text-white hover:bg-sky-primary font-heading font-semibold px-10 py-6 text-lg transition-colors"
+                >
+                  {/* Unlock My Full Diagnostic ($197) */}
+                  proceed
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>

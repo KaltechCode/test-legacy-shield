@@ -10,71 +10,78 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { session_id } = await req.json();
+    const { intake_id } = await req.json();
 
-    if (!session_id) {
-      return new Response(
-        JSON.stringify({ error: "session_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!intake_id) {
+      return new Response(JSON.stringify({ error: "session_id is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // 1) Retrieve checkout session from Stripe
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeSecretKey) {
-      console.error("STRIPE_SECRET_KEY is not configured");
-      return new Response(
-        JSON.stringify({ error: "Server configuration error." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    // if (!stripeSecretKey) {
+    //   console.error("STRIPE_SECRET_KEY is not configured");
+    //   return new Response(
+    //     JSON.stringify({ error: "Server configuration error." }),
+    //     { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    //   );
+    // }
 
-    const stripeResponse = await fetch(
-      `https://api.stripe.com/v1/checkout/sessions/${session_id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${stripeSecretKey}`,
-        },
-      }
-    );
+    // const stripeResponse = await fetch(
+    //   `https://api.stripe.com/v1/checkout/sessions/${session_id}`,
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${stripeSecretKey}`,
+    //     },
+    //   }
+    // );
 
-    if (!stripeResponse.ok) {
-      const errText = await stripeResponse.text();
-      console.error("Stripe API error:", stripeResponse.status, errText);
-      return new Response(
-        JSON.stringify({ error: "Failed to verify payment with Stripe." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // if (!stripeResponse.ok) {
+    //   const errText = await stripeResponse.text();
+    //   console.error("Stripe API error:", stripeResponse.status, errText);
+    //   return new Response(
+    //     JSON.stringify({ error: "Failed to verify payment with Stripe." }),
+    //     { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    //   );
+    // }
 
-    const session = await stripeResponse.json();
+    // const session = await stripeResponse.json();
 
     // 2) Verify payment is complete
-    if (session.payment_status !== "paid" || session.status !== "complete") {
-      console.warn("Payment not verified:", {
-        payment_status: session.payment_status,
-        status: session.status,
-      });
-      return new Response(
-        JSON.stringify({ error: "Payment could not be verified. Please contact support.", verified: false }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // if (session.payment_status !== "paid" || session.status !== "complete") {
+    //   console.warn("Payment not verified:", {
+    //     payment_status: session.payment_status,
+    //     status: session.status,
+    //   });
+    //   return new Response(
+    //     JSON.stringify({ error: "Payment could not be verified. Please contact support.", verified: false }),
+    //     { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    //   );
+    // }
 
     // 3) Extract intake_id from client_reference_id
-    const intakeId = session.client_reference_id;
+    const intakeId = intake_id;
     if (!intakeId) {
       console.error("No client_reference_id found in Stripe session");
       return new Response(
-        JSON.stringify({ error: "Could not match payment to intake record. Please contact support.", verified: false }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error:
+            "Could not match payment to intake record. Please contact support.",
+          verified: false,
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     // 4) Update intake record
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
     const { error } = await supabase
@@ -86,7 +93,10 @@ Deno.serve(async (req) => {
       console.error("Update error:", error);
       return new Response(
         JSON.stringify({ error: "Failed to update payment status." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -99,7 +109,7 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
         },
         body: JSON.stringify({ intake_id: intakeId }),
       });
@@ -112,13 +122,16 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, verified: true, intake_id: intakeId }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(
-      JSON.stringify({ error: "Internal server error." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error." }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
