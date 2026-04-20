@@ -387,7 +387,7 @@ const StressTest = () => {
                 </p>
                 <Button
                   size="lg"
-                  onClick={handeleProceed}
+                  onClick={handleProceed}
                   className="bg-navy-primary text-white hover:bg-sky-primary font-heading font-semibold px-10 py-6 text-lg transition-colors"
                 >
                   {/* Unlock My Full Diagnostic ($197) */}
