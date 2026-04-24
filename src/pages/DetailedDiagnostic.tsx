@@ -645,6 +645,8 @@ const DetailedDiagnostic = () => {
 
   const intakeId = sessionStorage.getItem("diagnostic_intake_id");
 
+  console.log(intakeId);
+
   useEffect(() => {
     if (!intakeId) {
       navigate("/stress-test/diagnostic", { replace: true });

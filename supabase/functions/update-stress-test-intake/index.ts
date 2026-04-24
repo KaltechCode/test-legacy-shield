@@ -10,20 +10,26 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: false, error: "Method not allowed" }),
+      {
+        status: 405,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   try {
     const { intake_id } = await req.json();
 
     if (!intake_id) {
-      return new Response(JSON.stringify({ success: false, error: "intake_id is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: "intake_id is required" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const supabase = createClient(
@@ -35,14 +41,17 @@ Deno.serve(async (req) => {
     const { error } = await supabase
       .from("financial_stress_test_intakes")
       .update({
-        payment_status: "proceeding_to_payment",
+        payment_status: "paid",
       })
       .eq("id", intake_id);
 
     if (error) {
       console.error("Update error:", error);
       return new Response(
-        JSON.stringify({ success: false, error: "Failed to update intake record." }),
+        JSON.stringify({
+          success: false,
+          error: "Failed to update intake record.",
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -58,9 +67,12 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ success: false, error: "Internal server error." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: false, error: "Internal server error." }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });
