@@ -44,13 +44,60 @@ const Metric = () => {
   }
 
   useEffect(() => {
-    if (!intakeId) {
-      navigate("/stress-test/diagnostic", { replace: true });
-      return;
-    }
+    const checkAuthAndFetch = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-    fetchExistingData(intakeId).finally(() => setLoading(false));
+        if (!session) {
+          setError("Please log in to access this page");
+          setLoading(false);
+          return;
+        }
+
+        if (!intakeId) {
+          navigate("/stress-test/diagnostic", { replace: true });
+          return;
+        }
+
+        await fetchExistingData(intakeId);
+      } catch (error) {
+        setError("Authentication failed. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuthAndFetch();
   }, [intakeId, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center px-4">
+        <div className="w-full max-w-md bg-card rounded-2xl shadow-lg border border-border p-8 text-center">
+          <p className="text-destructive mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return <div className="">dashboard</div>;
 };
