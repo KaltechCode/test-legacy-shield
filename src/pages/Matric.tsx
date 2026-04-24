@@ -19,7 +19,7 @@ const Metric = () => {
 
   const intakeId = sessionStorage.getItem("diagnostic_intake_id");
 
-  console.log(intakeId);
+  console.log(data);
 
   async function fetchExistingData(intakeId: string) {
     if (!intakeId) return null;
@@ -30,26 +30,26 @@ const Metric = () => {
           body: { intake_id: intakeId },
         });
 
-      console.log("Data", data);
-      setData(result);
       if (RetrieveError || result?.error) {
         setError(result?.error || "Retrieval failed. Please try again.");
-        return;
+        return null;
       }
+
+      setData(result);
+      return result;
     } catch {
       setError("Something went wrong. Please try again.");
+      return null;
     }
   }
 
   useEffect(() => {
-    if (!data) {
+    if (!intakeId) {
       navigate("/stress-test/diagnostic", { replace: true });
       return;
     }
 
-    fetchExistingData(intakeId);
-
-    setLoading(false);
+    fetchExistingData(intakeId).finally(() => setLoading(false));
   }, [intakeId, navigate]);
 
   return <div className="">dashboard</div>;
