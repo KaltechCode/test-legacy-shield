@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { buildUnifiedEmail } from "../_shared/emailTemplate.ts";
 import transporter from "../_shared/createTrasport.ts";
@@ -144,10 +143,13 @@ Deno.serve(async (req) => {
 
     if (!intake_id) {
       console.error("Missing intake_id");
-      return new Response(JSON.stringify({ success: false, error: "intake_id is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: "intake_id is required" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const supabase = createClient(
@@ -177,7 +179,11 @@ Deno.serve(async (req) => {
     if (skip_payment_check !== true && intake.payment_status !== "paid") {
       console.warn("Intake not paid, skipping:", intake_id);
       return new Response(
-        JSON.stringify({ success: false, error: "Payment not verified", skipped: true }),
+        JSON.stringify({
+          success: false,
+          error: "Payment not verified",
+          skipped: true,
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -212,7 +218,10 @@ Deno.serve(async (req) => {
       if (intake[field] == null || isNaN(Number(intake[field]))) {
         console.error(`Missing or invalid field: ${field}`, intake[field]);
         return new Response(
-          JSON.stringify({ success: false, error: `Missing required field: ${field}` }),
+          JSON.stringify({
+            success: false,
+            error: `Missing required field: ${field}`,
+          }),
           {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -261,29 +270,32 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error("Failed to update score:", updateError);
-      return new Response(JSON.stringify({ success: false, error: "Failed to update score" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // 6) Send email
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      console.error("RESEND_API_KEY not configured");
-      // Roll back the email_sent flag since email didn't go out
-      await supabase
-        .from("financial_stress_test_intakes")
-        .update({ preliminary_email_sent: false })
-        .eq("id", intake_id);
       return new Response(
-        JSON.stringify({ success: false, error: "Email service not configured" }),
+        JSON.stringify({ success: false, error: "Failed to update score" }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
+
+    // 6) Send email
+    // const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    // if (!resendApiKey) {
+    //   console.error("RESEND_API_KEY not configured");
+    //   // Roll back the email_sent flag since email didn't go out
+    //   await supabase
+    //     .from("financial_stress_test_intakes")
+    //     .update({ preliminary_email_sent: false })
+    //     .eq("id", intake_id);
+    //   return new Response(
+    //     JSON.stringify({ success: false, error: "Email service not configured" }),
+    //     {
+    //       status: 500,
+    //       headers: { ...corsHeaders, "Content-Type": "application/json" },
+    //     },
+    //   );
+    // }
 
     console.log(
       `DEBUG EMAIL BINDING: score=${totalScore}, type=${typeof totalScore}, category=${category}, firstName=${intake.first_name}`,
@@ -338,10 +350,13 @@ Deno.serve(async (req) => {
         .from("financial_stress_test_intakes")
         .update({ preliminary_email_sent: false })
         .eq("id", intake_id);
-      return new Response(JSON.stringify({ success: false, error: "Failed to send email" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: "Failed to send email" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     return new Response(
@@ -358,9 +373,12 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ success: false, error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: false, error: "Internal server error" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });

@@ -645,7 +645,7 @@ const DetailedDiagnostic = () => {
 
   const intakeId = sessionStorage.getItem("diagnostic_intake_id");
 
-  console.log(intakeId);
+  console.log("intakeId:", intakeId);
 
   useEffect(() => {
     if (!intakeId) {
