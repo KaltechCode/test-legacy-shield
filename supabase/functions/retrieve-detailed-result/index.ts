@@ -34,8 +34,8 @@ Deno.serve(async (req) => {
     const { data: intake, error: fetchError } = await supabase
       .from("detailed_diagnostics")
       .select("*")
-      .eq("id", intake_id)
-      .single();
+      .eq("intake_id", intake_id)
+      .maybeSingle();
 
     if (fetchError || !intake) {
       console.error("Failed to fetch intake:", fetchError);

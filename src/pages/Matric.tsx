@@ -46,15 +46,15 @@ const Metric = () => {
   useEffect(() => {
     const checkAuthAndFetch = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        // const {
+        //   data: { session },
+        // } = await supabase.auth.getSession();
 
-        if (!session) {
-          setError("Please log in to access this page");
-          setLoading(false);
-          return;
-        }
+        // if (!session) {
+        //   setError("Please log in to access this page");
+        //   setLoading(false);
+        //   return;
+        // }
 
         if (!intakeId) {
           navigate("/stress-test/diagnostic", { replace: true });
