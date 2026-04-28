@@ -3,7 +3,29 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE;
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ??
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE;
+
+const INVALID_BEARER_PREFIX = "Bearer sb_publishable_";
+
+const sanitizeAuthHeader = (headers: Headers): void => {
+  const authorization = headers.get("Authorization");
+  if (authorization?.startsWith(INVALID_BEARER_PREFIX)) {
+    headers.delete("Authorization");
+  }
+};
+
+const safeFetch: typeof fetch = async (input, init) => {
+  const headers = new Headers(init?.headers ?? {});
+  sanitizeAuthHeader(headers);
+
+  return fetch(input, {
+    ...init,
+    headers,
+  });
+};
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +38,9 @@ export const supabase = createClient<Database>(
       storage: localStorage,
       persistSession: true,
       autoRefreshToken: true,
+    },
+    global: {
+      fetch: safeFetch,
     },
   },
 );
