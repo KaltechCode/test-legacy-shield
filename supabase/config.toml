@@ -51,3 +51,6 @@ verify_jwt = false
 
 [functions.get-checkout-details]
 verify_jwt = false
+
+[functions.retrieve-detailed-result]
+verify_jwt = false
