@@ -1,9 +1,13 @@
 import { usePageTitle } from "@/hooks/usePageTitle";
 import AnimatedSection from "@/components/AnimatedSection";
-import { CheckCircle, Lock } from "lucide-react";
+import { ArrowRight, CheckCircle, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const DiagnosticConfirmation = () => {
   usePageTitle("Diagnostic Submitted");
+
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center px-4">
@@ -15,7 +19,9 @@ const DiagnosticConfirmation = () => {
               Your Detailed Financial Stress Analysis Is Being Prepared
             </h1>
             <p className="text-muted-foreground leading-relaxed">
-              Thank you for completing your comprehensive diagnostic. Your personalized report will be delivered within 24 hours following review.
+              Thank you for completing your comprehensive diagnostic. Your
+              personalized report will be delivered within 24 hours following
+              review.
             </p>
           </div>
 
@@ -26,7 +32,10 @@ const DiagnosticConfirmation = () => {
               "Protection alignment evaluation",
               "Retirement positioning review",
             ].map((item) => (
-              <li key={item} className="flex items-start gap-2.5 text-sm text-foreground">
+              <li
+                key={item}
+                className="flex items-start gap-2.5 text-sm text-foreground"
+              >
                 <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 {item}
               </li>
@@ -38,6 +47,16 @@ const DiagnosticConfirmation = () => {
             All information is encrypted and handled confidentially.
           </div>
         </div>
+
+        <Button
+          size="lg"
+          onClick={() => navigate("/visualization")}
+          className="bg-navy-primary text-white hover:bg-sky-primary font-heading font-semibold px-10 py-6 text-lg transition-colors"
+        >
+          {/* Unlock My Full Diagnostic ($197) */}
+          Go to Dashboard
+          <ArrowRight className="ml-2 h-5 w-5" />
+        </Button>
       </AnimatedSection>
     </div>
   );
