@@ -51,7 +51,7 @@ const DiagnosticConfirmation = () => {
         <Button
           size="lg"
           onClick={() => navigate("/visualization")}
-          className="bg-navy-primary text-white hover:bg-sky-primary font-heading font-semibold px-10 py-6 text-lg transition-colors"
+          className="bg-navy-primary text-white hover:bg-sky-primary font-heading font-semibold px-10 py-6 text-lg transition-colors mx-auto mt-6"
         >
           {/* Unlock My Full Diagnostic ($197) */}
           Go to Dashboard
