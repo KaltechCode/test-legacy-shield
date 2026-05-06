@@ -39,11 +39,13 @@ const HomePage = () => {
               size="lg"
               className="bg-white text-navy-primary border-2 border-navy-primary hover:bg-navy-primary hover:text-white font-heading font-semibold px-8 py-6 text-lg transition-colors"
             >
-              <a href="/financial-stability-stress-test">
+              <a href="/financial-stability-stress-test#intake-form">
                 Get Your Financial Stability Score
               </a>
             </Button>
-            <p className="mt-3 text-sm text-muted-foreground">Takes less than 3 minutes to start</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Takes less than 3 minutes to start
+            </p>
           </div>
         </div>
       </section>

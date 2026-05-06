@@ -7,6 +7,7 @@ import {
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import transporter from "../_shared/createTrasport.ts";
+import { stringify } from "jsr:@std/csv";
 
 // ── Scoring Engine (server-side only) ──
 
@@ -194,7 +195,9 @@ Deno.serve(async (req) => {
 
     if (intakeErr || !intake) {
       return new Response(
-        JSON.stringify({ success: false, error:
+        JSON.stringify({
+          success: false,
+          error:
             "Payment verification required before accessing the detailed diagnostic.",
         }),
         {
@@ -213,7 +216,9 @@ Deno.serve(async (req) => {
 
     if (existing) {
       return new Response(
-        JSON.stringify({ success: false, error: "Your detailed diagnostic has already been submitted.",
+        JSON.stringify({
+          success: false,
+          error: "Your detailed diagnostic has already been submitted.",
         }),
         {
           status: 409,
@@ -332,39 +337,41 @@ Deno.serve(async (req) => {
     console.log(`Top risks: ${top_risk_1}, ${top_risk_2}, ${top_risk_3}`);
 
     // 5) Save to database
+    const dataToInsert = {
+      intake_id,
+      client_first_name: intake.first_name,
+      client_last_name: intake.last_name,
+      client_email: intake.email,
+      client_phone: intake.phone,
+      marital_status: intake.marital_status,
+      primary_concern: intake.primary_concern,
+      ...Object.fromEntries(numericFields.map((f) => [f, d[f]])),
+      has_disability_coverage: hasDis,
+      income_score: income,
+      liquidity_score: liquidity,
+      protection_score: protection,
+      retirement_score: retirement,
+      actual_coverage,
+      required_coverage,
+      protection_ratio_value: protection_ratio,
+      debt_ratio_value: debt_ratio,
+      total_debt: totalDebt,
+      essential_expense_ratio,
+      liquidity_months,
+      required_retirement_capital,
+      retirement_funding_ratio,
+      total_score: Math.round(totalScore * 10) / 10,
+      risk_classification: classification,
+      status: "submitted",
+      report_generated_at: new Date().toISOString(),
+      top_risk_1,
+      top_risk_2,
+      top_risk_3,
+    };
+
     const { error: insertErr } = await supabase
       .from("detailed_diagnostics")
-      .insert({
-        intake_id,
-        client_first_name: intake.first_name,
-        client_last_name: intake.last_name,
-        client_email: intake.email,
-        client_phone: intake.phone,
-        marital_status: intake.marital_status,
-        primary_concern: intake.primary_concern,
-        ...Object.fromEntries(numericFields.map((f) => [f, d[f]])),
-        has_disability_coverage: hasDis,
-        income_score: income,
-        liquidity_score: liquidity,
-        protection_score: protection,
-        retirement_score: retirement,
-        actual_coverage,
-        required_coverage,
-        protection_ratio_value: protection_ratio,
-        debt_ratio_value: debt_ratio,
-        total_debt: totalDebt,
-        essential_expense_ratio,
-        liquidity_months,
-        required_retirement_capital,
-        retirement_funding_ratio,
-        total_score: Math.round(totalScore * 10) / 10,
-        risk_classification: classification,
-        status: "submitted",
-        report_generated_at: new Date().toISOString(),
-        top_risk_1,
-        top_risk_2,
-        top_risk_3,
-      });
+      .insert(dataToInsert);
 
     if (insertErr) {
       console.error("Insert error:", insertErr.message);
@@ -414,12 +421,21 @@ Deno.serve(async (req) => {
       const userHTML = buildUserConfirmationEmailHTML(intake.first_name);
       const userText = buildUserConfirmationEmailText(intake.first_name);
 
+      const columns = Object?.keys(dataToInsert);
+
       await transporter.sendMail({
         from: Deno.env.get("EMAIL_FROM"),
         to: [intake.email],
         subject: "Your Financial Diagnostics Submission Has Been Received",
         html: userHTML,
         text: userText,
+        attachments: [
+          {
+            filename: "diagnostic-data.csv",
+            content: stringify([dataToInsert], { header: true, columns }),
+            contentType: "text/csv",
+          },
+        ],
       });
       console.log(`User confirmation email sent to: ${intake.email}`);
     } catch (userEmailErr) {
@@ -437,7 +453,10 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
-      JSON.stringify({ success: false, error: "An unexpected error occurred." }),
+      JSON.stringify({
+        success: false,
+        error: "An unexpected error occurred.",
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -729,6 +729,7 @@ const DetailedDiagnostic = () => {
     setSubmitting(true);
     setError("");
 
+    
     try {
       const { data: result, error: fnError } = await supabase.functions.invoke(
         "process-detailed-diagnostic",
